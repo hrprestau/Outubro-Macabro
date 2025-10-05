@@ -33,12 +33,12 @@
     .smallNote{font-size:12px;opacity:0.9}
     #resultsView{display:none}
     .podium{display:flex;gap:12px;align-items:end;justify-content:center;margin:20px 0}
-    /* AJUSTE DO PÓDIO: A ordem deve ser 2º, 1º, 3º. Vamos usar flex-order no JS */
+    /* Pódio - Ordem visual 2º, 1º, 3º */
     .podium .place{width:160px;text-align:center;padding:14px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));}
     /* updated colors for the image-like podium */
-    .first{height:180px;background:linear-gradient(180deg,#D4AF37,#E6C85C);color:#231900; order: 2; /* 1º no centro */ }
-    .second{height:140px;background:linear-gradient(180deg,#C0C0C0,#D7D7D7);color:#0b0b0b; order: 1; /* 2º à esquerda */ }
-    .third{height:120px;background:linear-gradient(180deg,#CD7F32,#D99663);color:#2b0b00; order: 3; /* 3º à direita */ }
+    .first{height:180px;background:linear-gradient(180deg,#D4AF37,#E6C85C);color:#231900; **order: 2;** /* 1º no centro */ }
+    .second{height:140px;background:linear-gradient(180deg,#C0C0C0,#D7D7D7);color:#0b0b0b; **order: 1;** /* 2º à esquerda */ }
+    .third{height:120px;background:linear-gradient(180deg,#CD7F32,#D99663);color:#2b0b00; **order: 3;** /* 3º à direita */ }
     .listings{margin-top:12px}
     table{width:100%;border-collapse:collapse}
     th,td{padding:8px;border-bottom:1px dashed rgba(255,255,255,0.03);text-align:left}
@@ -111,7 +111,8 @@
 
       <h3 style="margin-top:6px">Pódio</h3>
       <div class="podium" id="podiumContainer"></div>
-            <h3>Todos os envios (ordem de envio)</h3>
+
+      <h3>Todos os envios (ordem de envio)</h3>
       <div class="listings">
         <table><thead><tr><th>#</th><th>Nick</th><th>Pontos</th><th>Tempo (s)</th><th>Data / Hora</th><th>Ações</th></tr></thead><tbody id="allSubmissions"></tbody></table>
       </div>
@@ -139,7 +140,7 @@
       <div class="modalActions">
         <button id="cancelSaveBtn" class="btn" style="background:#666;color:#fff">Fechar</button>
         <button id="confirmSaveBtn" class="btn">Salvar Resultado</button>
-        </div>
+      </div>
     </div>
   </div>
 
@@ -463,7 +464,7 @@
       const fallback = JSON.parse(localStorage.getItem('quiz_submissions_fallback')||'[]');
       subs = subs.concat(fallback.map(s=>({ id:null, ...s })));
 
-      // CRITÉRIO DE RANKEAMENTO CORRIGIDO: Score DESC, Timestamp ASC (somente para empate)
+      // CRITÉRIO DE RANKEAMENTO: Score DESC, Timestamp ASC (somente para empate)
       const podiumSorted = [...subs].sort((a,b)=>{
         // 1. Score: maior score primeiro (b - a)
         if((b.score||0) !== (a.score||0)) return (b.score||0) - (a.score||0);
@@ -475,20 +476,18 @@
       podiumContainer.innerHTML = '';
       const top3 = [podiumSorted[0]||null, podiumSorted[1]||null, podiumSorted[2]||null];
       
-      // ORDEM VISUAL DO PÓDIO: 2º, 1º, 3º (posições 1, 0, 2 no array top3)
+      // ORDEM VISUAL DO PÓDIO: 2º (top3[1]), 1º (top3[0]), 3º (top3[2])
       const layout = [1,0,2];
       
-      layout.forEach((posIdx)=>{
-        const data = top3[posIdx];
+      layout.forEach((listIndex)=>{
+        const data = top3[listIndex];
         const placeDiv = document.createElement('div');
         
-        // As classes first, second, third já têm o order: 2, 1, 3 no CSS
-        // posIdx=1 -> 2º colocado na lista, mas é o bloco 'second'
-        // posIdx=0 -> 1º colocado na lista, mas é o bloco 'first'
-        // posIdx=2 -> 3º colocado na lista, mas é o bloco 'third'
-        // Correção:
-        const placeClass = posIdx===1 ? 'second' : (posIdx===0 ? 'first' : 'third');
-        const placeNum = posIdx===1 ? '2º' : (posIdx===0 ? '1º' : '3º');
+        // O 1º classificado da lista (listIndex=0) é o bloco 'first' (1º lugar)
+        // O 2º classificado da lista (listIndex=1) é o bloco 'second' (2º lugar)
+        // O 3º classificado da lista (listIndex=2) é o bloco 'third' (3º lugar)
+        const placeClass = listIndex===0 ? 'first' : (listIndex===1 ? 'second' : 'third');
+        const placeNum = listIndex===0 ? '1º' : (listIndex===1 ? '2º' : '3º');
 
         placeDiv.className = 'place ' + placeClass;
 

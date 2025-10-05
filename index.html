@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Outubro Macabro: Quiz dos personagens</title>
+  <style>
+    :root{
+      --bg1: #2b0b3a; /* deep purple */
+      --bg2: #4b1060; /* lighter purple */
+      --accent: #ff7a00; /* orange */
+      --card: rgba(255,255,255,0.04);
+      --glass: rgba(255,255,255,0.04);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;min-height:100vh;display:flex;align-items:stretch;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:#fff}
+    .container{width:100%;max-width:1100px;margin:40px auto;padding:20px}
+    header{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:18px;text-align:center}
+    h1{font-size:28px;margin:0;color:var(--accent)}
+    h2{margin:0;font-size:18px;opacity:0.95}
+
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));border-radius:12px;padding:20px;box-shadow:0 6px 20px rgba(0,0,0,0.4)}
+
+    /* Login view */
+    #loginView{max-width:600px;margin:0 auto}
+    label{display:block;margin-bottom:8px;font-weight:600}
+    input[type=text]{width:100%;padding:12px;border-radius:8px;border:2px solid rgba(255,255,255,0.08);background:transparent;color:#fff;font-size:16px}
+    .btn{display:inline-block;padding:10px 16px;border-radius:8px;background:var(--accent);color:#1a0b00;font-weight:700;border:none;cursor:pointer}
+    .muted{opacity:0.85}
+
+    /* Game view */
+    #gameView{display:none}
+    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .timer{font-weight:800;font-size:36px;background:rgba(0,0,0,0.25);padding:8px 12px;border-radius:10px}
+    .score{font-size:18px}
+    .stage{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:8px}
+    .characterCard{width:360px;height:360px;border-radius:12px;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,0.6)}
+    .characterCard img{max-width:100%;max-height:100%;object-fit:contain}
+    .answerBox{margin-top:14px;display:flex;gap:10px;align-items:center}
+    .answerBox input{flex:1;padding:12px;border-radius:10px;border:2px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);color:#fff;font-size:16px}
+    .answerBox input.wrong{border-color:#ff4b4b;background:rgba(255,75,75,0.06);animation:shake .3s}
+    @keyframes shake{0%{transform:translateX(-3px)}50%{transform:translateX(3px)}100%{transform:translateX(0)}}
+
+    .countdownBig{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-size:96px;font-weight:900;color:var(--accent);pointer-events:none}
+    .smallNote{font-size:12px;opacity:0.9}
+
+    /* Results view */
+    #resultsView{display:none}
+    .podium{display:flex;gap:12px;align-items:end;justify-content:center;margin:20px 0}
+    .podium .place{width:160px;text-align:center;padding:14px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));}
+    .first{height:180px;background:linear-gradient(180deg,#ffe3bf, #ffd59a);color:#331900}
+    .second{height:140px;background:linear-gradient(180deg,#e6e6ff,#cfcfff);color:#0b0033}
+    .third{height:120px;background:linear-gradient(180deg,#ffd6e6,#ffcce0);color:#3b0019}
+
+    .listings{margin-top:12px}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px;border-bottom:1px dashed rgba(255,255,255,0.03);text-align:left}
+
+    footer{margin-top:26px;text-align:center;opacity:0.85}
+
+    /* responsive */
+    @media (max-width:700px){.characterCard{width:90vw;height:60vw}.timer{font-size:28px}.countdownBig{font-size:64px}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Outubro Macabro: 31 Dias de Mistério e Sabor</h1>
+      <h2>Quiz dos personagens</h2>
+    </header>
+
+    <!-- LOGIN -->
+    <div id="loginView" class="card">
+      <p class="muted">Escolha um nick para jogar. Cada nick só pode jogar uma vez.</p>
+      <label for="nickInput">Nick</label>
+      <input type="text" id="nickInput" placeholder="Seu apelido..." autocomplete="off" />
+      <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
+        <button id="startBtn" class="btn">Iniciar Quiz</button>
+        <button id="viewResultsBtn" class="btn" style="background:#6b2b8a;color:#fff">Ver Pódio</button>
+      </div>
+      <p id="loginMsg" style="margin-top:12px;color:#ffcccb;display:none;font-weight:700"></p>
+    </div>
+
+    <!-- GAME -->
+    <div id="gameView" class="card">
+      <div class="topbar">
+        <div class="timer" id="questionTimer">30</div>
+        <div class="score">Nick: <span id="nickBadge"></span> &nbsp;|&nbsp; Pontos: <strong id="score">0</strong></div>
+      </div>
+
+      <div class="stage">
+        <div class="characterCard" id="charCard"><img id="charImg" src="" alt="personagem"/></div>
+        <div class="answerBox">
+          <input id="answerInput" type="text" placeholder="Quem é esse personagem?" autocomplete="off" />
+          <button id="submitAnswer" class="btn">Responder</button>
+        </div>
+        <div class="smallNote">Você tem <strong>30s</strong> por personagem. Acerta = +10 pontos.</div>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div id="resultsView" class="card">
+      <div id="userResultBox" style="margin-bottom:12px;padding:12px;border-radius:8px;background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));display:none"></div>
+
+      <h3 style="margin-top:6px">Pódio</h3>
+      <div class="podium" id="podiumContainer"></div>
+
+      <h3>Todos os envios (ordem de envio)</h3>
+      <div class="listings">
+        <table><thead><tr><th>#</th><th>Nick</th><th>Pontos</th><th>Tempo (s)</th><th>Data / Hora</th></tr></thead><tbody id="allSubmissions"></tbody></table>
+      </div>
+    </div>
+
+    <footer>Feito por: luis</footer>
+  </div>
+
+  <div id="countdownBig" class="countdownBig" style="display:none"></div>
+
+  <audio id="negativeSound"></audio>
+  <audio id="positiveSound"></audio>
+
+  <script>
+    // --- Data ---
+    const characters = [
+      {name:'chuck', url:'https://i.imgur.com/6XKMp7Y.png'},
+      {name:'Drácula', url:'https://i.imgur.com/aeRFyCr.png'},
+      {name:'Freddy Krueger', url:'https://i.imgur.com/RyQgov7.png'},
+      {name:'Pennywise', url:'https://i.imgur.com/MdF3VWu.png'},
+      {name:'Frankenstein', url:'https://i.imgur.com/1TpY4md.png'},
+      {name:'Jason', url:'https://i.imgur.com/UPotXXO.png'},
+      {name:'Lobisomem', url:'https://i.imgur.com/kB6ydUP.png'},
+      {name:'Annabelle', url:'https://i.imgur.com/gHdIHHd.png'},
+      {name:'Michael Myers', url:'https://i.imgur.com/7feqzEE.png'},
+      {name:'Jack Skellington', url:'https://i.imgur.com/lxdb9oT.png'}
+    ];
+
+    // --- DOM ---
+    const loginView = document.getElementById('loginView');
+    const gameView = document.getElementById('gameView');
+    const resultsView = document.getElementById('resultsView');
+    const nickInput = document.getElementById('nickInput');
+    const startBtn = document.getElementById('startBtn');
+    const viewResultsBtn = document.getElementById('viewResultsBtn');
+    const loginMsg = document.getElementById('loginMsg');
+    const nickBadge = document.getElementById('nickBadge');
+
+    const charImg = document.getElementById('charImg');
+    const questionTimerEl = document.getElementById('questionTimer');
+    const answerInput = document.getElementById('answerInput');
+    const submitAnswer = document.getElementById('submitAnswer');
+    const scoreEl = document.getElementById('score');
+
+    const countdownBig = document.getElementById('countdownBig');
+
+    const negativeSoundEl = document.getElementById('negativeSound');
+    const positiveSoundEl = document.getElementById('positiveSound');
+
+    const podiumContainer = document.getElementById('podiumContainer');
+    const allSubmissionsTbody = document.getElementById('allSubmissions');
+    const userResultBox = document.getElementById('userResultBox');
+
+    // --- Storage keys ---
+    const SUBMISSIONS_KEY = 'quiz_submissions_v1';
+    const PLAYED_NICKS_KEY = 'quiz_played_nicks_v1';
+
+    // --- State ---
+    let shuffled = [];
+    let currentIndex = 0;
+    let perQuestionTimer = null;
+    let perQuestionRemaining = 30;
+    let score = 0;
+    let currentUser = null;
+    let gameStartTs = null; // when countdown finished
+    let gameEndTs = null;
+
+    // --- Utils ---
+    function getSubmissions(){
+      try{
+        return JSON.parse(localStorage.getItem(SUBMISSIONS_KEY) || '[]');
+      }catch(e){return []}
+    }
+    function saveSubmissions(arr){localStorage.setItem(SUBMISSIONS_KEY, JSON.stringify(arr))}
+
+    function getPlayedNicks(){
+      try{return JSON.parse(localStorage.getItem(PLAYED_NICKS_KEY) || '[]')}catch(e){return []}
+    }
+    function addPlayedNick(nick){
+      const arr=getPlayedNicks();arr.push(nick);localStorage.setItem(PLAYED_NICKS_KEY, JSON.stringify(arr));
+    }
+
+    function normalizeAnswer(s){
+      if(!s) return '';
+      return s.toLowerCase().trim().normalize('NFD').replace(/\p{Diacritic}/gu, '');
+    }
+
+    // create simple negative & positive tones using WebAudio and export to Blob URL for quick use
+    function mkTone(freq,dur,decay, type='sine'){
+      const ctx = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1,44100*dur/1000,44100);
+      const o=ctx.createOscillator();const g=ctx.createGain();o.type=type;o.frequency.value=freq;g.gain.value=1;o.connect(g);g.connect(ctx.destination);o.start(0);g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur/1000);
+      return ctx.startRendering().then(buffer=>{
+        const wav = audioBufferToWav(buffer);
+        const blob = new Blob([new DataView(wav)],{type:'audio/wav'});
+        return URL.createObjectURL(blob);
+      });
+    }
+    // tiny function to convert audio buffer to wav (adapted)
+    function audioBufferToWav(buffer) {
+      function writeString(view, offset, string) {
+        for (var i = 0; i < string.length; i++) {
+          view.setUint8(offset + i, string.charCodeAt(i));
+        }
+      }
+      var numOfChan = buffer.numberOfChannels,
+        length = buffer.length * numOfChan * 2 + 44,
+        buffer2 = new ArrayBuffer(length),
+        view = new DataView(buffer2),
+        channels = [],
+        i, sample,
+        offset = 0,
+        pos = 0;
+      writeString(view, 0, 'RIFF'); pos += 4;
+      view.setUint32(pos, 36 + buffer.length * numOfChan * 2, true); pos += 4;
+      writeString(view, pos, 'WAVE'); pos += 4;
+      writeString(view, pos, 'fmt '); pos += 4;
+      view.setUint32(pos, 16, true); pos += 4;
+      view.setUint16(pos, 1, true); pos += 2;
+      view.setUint16(pos, numOfChan, true); pos += 2;
+      view.setUint32(pos, buffer.sampleRate, true); pos += 4;
+      view.setUint32(pos, buffer.sampleRate * 2 * numOfChan, true); pos += 4;
+      view.setUint16(pos, numOfChan * 2, true); pos += 2;
+      view.setUint16(pos, 16, true); pos += 2;
+      writeString(view, pos, 'data'); pos += 4;
+      view.setUint32(pos, buffer.length * numOfChan * 2, true); pos += 4;
+      for(i = 0; i < buffer.numberOfChannels; i++){
+        channels.push(buffer.getChannelData(i));
+      }
+      while (offset < buffer.length) {
+        for (i = 0; i < numOfChan; i++) {
+          sample = Math.max(-1, Math.min(1, channels[i][offset]));
+          view.setInt16(pos, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
+          pos += 2;
+        }
+        offset++;
+      }
+      return buffer2;
+    }
+
+    // prepare short sounds
+    Promise.all([
+      mkTone(160,120,0.2,'square'), // negative
+      mkTone(880,180,0.2,'sine') // positive
+    ]).then(urls=>{
+      negativeSoundEl.src = urls[0];
+      positiveSoundEl.src = urls[1];
+    }).catch(()=>{
+      // fallback: small beep using data URI (silent if fails)
+    });
+
+    // --- UI Logic ---
+    function showView(v){loginView.style.display='none';gameView.style.display='none';resultsView.style.display='none';
+      if(v==='login') loginView.style.display='block';
+      if(v==='game') gameView.style.display='block';
+      if(v==='results') resultsView.style.display='block';
+    }
+
+    function showLoginMessage(msg){loginMsg.style.display='block';loginMsg.textContent=msg}
+    function hideLoginMessage(){loginMsg.style.display='none';loginMsg.textContent=''}
+
+    startBtn.addEventListener('click', ()=>{
+      const nick = nickInput.value.trim();
+      if(!nick){showLoginMessage('Informe um nick válido.');return}
+      const lower = nick.toLowerCase();
+      const played = getPlayedNicks().map(n=>n.toLowerCase());
+      if(played.includes(lower)){
+        showLoginMessage('Só é permitido jogar apenas uma Vez!');
+        // show button to view results
+        const viewBtn = document.createElement('button');
+        viewBtn.className='btn';viewBtn.style.background='#6b2b8a';viewBtn.textContent='Ver Resultado!';
+        viewBtn.onclick = ()=>{ renderResultsForNick(nick); showView('results') };
+        // remove previous if exists
+        const existing = document.getElementById('viewResultInline');
+        if(existing) existing.remove();
+        viewBtn.id='viewResultInline';
+        loginView.appendChild(viewBtn);
+        return;
+      }
+      // start flow
+      currentUser = nick;
+      nickBadge.textContent = currentUser;
+      hideLoginMessage();
+      startCountdownBeforeGame();
+    });
+
+    viewResultsBtn.addEventListener('click', ()=>{ renderAllResults(); showView('results'); });
+
+    // Countdown 5..1 Valendo!
+    function startCountdownBeforeGame(){
+      showView('game');
+      countdownBig.style.display='flex';
+      let n=5;
+      countdownBig.textContent = n;
+      const intr=setInterval(()=>{
+        n--;
+        if(n>0) countdownBig.textContent = n;
+        else if(n===0) countdownBig.textContent = 'Valendo!';
+        else { clearInterval(intr); countdownBig.style.display='none'; beginGame(); }
+      },900);
+    }
+
+    function beginGame(){
+      // setup
+      shuffled = [...characters];
+      // shuffle
+      for(let i=shuffled.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]] }
+      currentIndex=0; score=0; scoreEl.textContent=score; answerInput.value='';
+      gameStartTs = Date.now();
+      showQuestion(currentIndex);
+      answerInput.focus();
+    }
+
+    function showQuestion(idx){
+      if(idx>=shuffled.length){ finishGame(); return }
+      const ch = shuffled[idx];
+      charImg.src = ch.url;
+      charImg.alt = ch.name;
+      perQuestionRemaining = 30; questionTimerEl.textContent = perQuestionRemaining;
+      if(perQuestionTimer) clearInterval(perQuestionTimer);
+      perQuestionTimer = setInterval(()=>{
+        perQuestionRemaining--; questionTimerEl.textContent = perQuestionRemaining;
+        if(perQuestionRemaining<=0){ clearInterval(perQuestionTimer); markWrong(); setTimeout(()=>{ currentIndex++; showQuestion(currentIndex); },600) }
+      },1000);
+    }
+
+    function markWrong(){
+      // red box and negative sound
+      answerInput.classList.add('wrong');
+      try{ negativeSoundEl.currentTime=0; negativeSoundEl.play(); }catch(e){}
+      setTimeout(()=>answerInput.classList.remove('wrong'),700);
+    }
+
+    function markCorrect(){
+      // small positive feedback
+      answerInput.classList.remove('wrong');
+      try{ positiveSoundEl.currentTime=0; positiveSoundEl.play(); }catch(e){}
+    }
+
+    submitAnswer.addEventListener('click', handleSubmit);
+    answerInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') handleSubmit() });
+
+    function handleSubmit(){
+      const ans = normalizeAnswer(answerInput.value);
+      const expected = normalizeAnswer(shuffled[currentIndex].name);
+      if(!ans){answerInput.classList.add('wrong'); setTimeout(()=>answerInput.classList.remove('wrong'),600); return}
+      if(ans === expected){
+        // correct
+        score += 10; scoreEl.textContent = score; markCorrect();
+        clearInterval(perQuestionTimer);
+        answerInput.value='';
+        currentIndex++;
+        setTimeout(()=>{ showQuestion(currentIndex); },500);
+      } else {
+        // wrong
+        markWrong();
+        // don't reduce score but move to next after short delay
+        clearInterval(perQuestionTimer);
+        setTimeout(()=>{ answerInput.value=''; currentIndex++; showQuestion(currentIndex); },700);
+      }
+    }
+
+    function finishGame(){
+      gameEndTs = Date.now();
+      if(perQuestionTimer) clearInterval(perQuestionTimer);
+      const totalTimeSec = Math.round((gameEndTs - gameStartTs)/1000);
+      // save submission
+      const submissions = getSubmissions();
+      const submission = { nick: currentUser, score: score, timeSec: totalTimeSec, timestamp: Date.now() };
+      submissions.push(submission);
+      saveSubmissions(submissions);
+      addPlayedNick(currentUser);
+      // show results page and user's box
+      renderAllResults(submission);
+      showView('results');
+    }
+
+    // --- Results rendering ---
+    function renderAllResults(latestSubmission){
+      const subs = getSubmissions();
+      // podium: sort by score desc, then timestamp asc (earlier first)
+      const podiumSorted = [...subs].sort((a,b)=>{
+        if(b.score!==a.score) return b.score - a.score; // higher score first
+        return a.timestamp - b.timestamp; // earlier first
+      });
+      // show top 3
+      podiumContainer.innerHTML='';
+      const top3 = [podiumSorted[0]||null, podiumSorted[1]||null, podiumSorted[2]||null];
+      const classes = ['second','first','third'];
+      // arrange display: second, first, third to look like podium
+      const order = [1,0,2];
+      order.forEach((pos,i)=>{
+        const data = top3[pos];
+        const placeDiv = document.createElement('div'); placeDiv.className='place '+ (pos===1? 'first' : (pos===0? 'second':'third'));
+        if(data){
+          const placeNum = pos===1? '1º' : (pos===0? '2º':'3º');
+          placeDiv.innerHTML = `<div style="font-size:14px;font-weight:800">${placeNum}</div><div style="margin-top:6px;font-weight:800">${data.nick}</div><div style="margin-top:6px;font-weight:700">${data.score} pts</div>`;
+        } else {
+          placeDiv.innerHTML = `<div style="font-size:14px;opacity:0.9">-</div>`;
+        }
+        podiumContainer.appendChild(placeDiv);
+      });
+
+      // all submissions by order of envio (chronological)
+      allSubmissionsTbody.innerHTML='';
+      const byOrder = [...subs].sort((a,b)=> a.timestamp - b.timestamp);
+      byOrder.forEach((s, idx)=>{
+        const tr = document.createElement('tr');
+        const d = new Date(s.timestamp);
+        tr.innerHTML = `<td>${idx+1}</td><td>${escapeHtml(s.nick)}</td><td>${s.score}</td><td>${s.timeSec}</td><td>${formatDateTime(d)}</td>`;
+        allSubmissionsTbody.appendChild(tr);
+      });
+
+      // user's box
+      if(latestSubmission){
+        showUserBox(latestSubmission);
+      } else if(currentUser){
+        // find this user's submission
+        const found = subs.slice().reverse().find(s=> s.nick.toLowerCase()===currentUser.toLowerCase());
+        if(found) showUserBox(found);
+      } else {
+        userResultBox.style.display='none';
+      }
+    }
+
+    function renderResultsForNick(nick){
+      const subs = getSubmissions();
+      const found = subs.slice().reverse().find(s=> s.nick.toLowerCase()===nick.toLowerCase());
+      renderAllResults(found);
+    }
+
+    function showUserBox(sub){
+      userResultBox.style.display='block';
+      const d = new Date(sub.timestamp);
+      userResultBox.innerHTML = `<strong>Seu resultado</strong><div style="margin-top:6px">Nick: <strong>${escapeHtml(sub.nick)}</strong></div><div>Pontos: <strong>${sub.score}</strong></div><div>Tempo para realizar o questionário: <strong>${sub.timeSec} s</strong></div><div>Data / Hora do envio: <strong>${formatDateTime(d)}</strong></div>`;
+    }
+
+    function formatDateTime(d){
+      return d.toLocaleString('pt-BR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'})
+    }
+
+    function escapeHtml(s){return s.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')}
+
+    // --- Initialization: check if user reopened on results page by query param (optional) ---
+    (function init(){
+      // quick guard: if a user is set and already played, disable start
+      showView('login');
+      // preload images
+      characters.forEach(c=>{ const i=new Image(); i.src=c.url });
+    })();
+
+    // prevent accidental reload during game
+    window.addEventListener('beforeunload', (e)=>{
+      if(gameStartTs && !gameEndTs){ e.preventDefault(); e.returnValue='Se você sair agora perderá seu progresso.' }
+    });
+  </script>
+</body>
+</html>

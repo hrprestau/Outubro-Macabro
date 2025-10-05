@@ -5,10 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Outubro Macabro: Quiz dos personagens</title>
   <style>
-    :root{--bg1:#2b0b3a;--bg2:#4b1060;--accent:#ff7a00;--gold-light:#ffdb99;--gold-dark:#e6b800;--silver-light:#e6e6ff;--silver-dark:#a8a8c4;--bronze-light:#ffd6e6;--bronze-dark:#a85a73}
+    :root{--bg1:#2b0b3a;--bg2:#4b1060;--accent:#ff7a00}
     *{box-sizing:border-box}
-    body{margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;min-height:100vh;display:flex;align-items:stretch;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:#fff;transition:filter 0.4s ease-out}
-    .blur-active{filter:blur(6px) !important} /* Novo: Classe para o efeito blur */
+    body{margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;min-height:100vh;display:flex;align-items:stretch;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:#fff}
     .container{width:100%;max-width:1100px;margin:40px auto;padding:20px}
     header{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:18px;text-align:center}
     h1{font-size:28px;margin:0;color:var(--accent)}
@@ -30,34 +29,32 @@
     .answerBox input{flex:1;padding:12px;border-radius:10px;border:2px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);color:#fff;font-size:16px}
     .answerBox input.wrong{border-color:#ff4b4b;background:rgba(255,75,75,0.06);animation:shake .3s}
     @keyframes shake{0%{transform:translateX(-3px)}50%{transform:translateX(3px)}100%{transform:translateX(0)}}
-    .countdownBig{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-size:96px;font-weight:900;color:var(--accent);pointer-events:none;z-index:100}
+    .countdownBig{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-size:96px;font-weight:900;color:var(--accent);pointer-events:none}
     .smallNote{font-size:12px;opacity:0.9}
     #resultsView{display:none}
     .podium{display:flex;gap:12px;align-items:end;justify-content:center;margin:20px 0}
-    .podium .place{width:160px;text-align:center;padding:14px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));box-shadow: 0 4px 10px rgba(0,0,0,0.2)}
-    /* Cores do Pódio Ajustadas */
-    .first{height:180px;background:linear-gradient(180deg,var(--gold-light), var(--gold-dark));color:#331900}
-    .second{height:140px;background:linear-gradient(180deg,var(--silver-light),var(--silver-dark));color:#0b0033}
-    .third{height:120px;background:linear-gradient(180deg,var(--bronze-light),var(--bronze-dark));color:#3b0019}
+    .podium .place{width:160px;text-align:center;padding:14px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));}
+    .first{height:180px;background:linear-gradient(180deg,#ffe3bf, #ffd59a);color:#331900}
+    .second{height:140px;background:linear-gradient(180deg,#e6e6ff,#cfcfff);color:#0b0033}
+    .third{height:120px;background:linear-gradient(180deg,#ffd6e6,#ffcce0);color:#3b0019}
     .listings{margin-top:12px}
     table{width:100%;border-collapse:collapse}
     th,td{padding:8px;border-bottom:1px dashed rgba(255,255,255,0.03);text-align:left}
     footer{margin-top:26px;text-align:center;opacity:0.85}
     .admin-panel{margin-top:12px}
     .admin-actions{display:flex;gap:8px;flex-wrap:wrap}
-
-    /* Novo: Estilo do Modal/Janela de Resultado */
-    #endGameModal{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:none;align-items:center;justify-content:center;z-index:200}
-    #endGameModalContent{background:var(--bg2);padding:30px;border-radius:15px;max-width:400px;width:90%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.8)}
-    #endGameModalContent h3{color:var(--accent);margin-top:0}
-    #saveResultBtn{margin-top:20px;width:100%}
-    #modalData p{margin:8px 0;font-size:18px}
-    #modalData strong{color:var(--accent)}
-
     @media (max-width:700px){.characterCard{width:90vw;height:60vw}.timer{font-size:28px}.countdownBig{font-size:64px}}
+    /* CORREÇÃO DO BUG DE SOBREPOSIÇÃO VISUALIZADA NA IMAGEM (Mensagem de "Quiz Finalizado!") */
+    #finalizadoExtra{ 
+        display: none; /* Garante que a seção de finalização extra não aparece na tela de login */
+    }
+    /* Estilo para o botão "Ver Resultado!" que é adicionado dinamicamente */
+    #viewResultInline {
+        margin-top: 12px; 
+    }
   </style>
 </head>
-<body id="quizBody">
+<body>
   <div class="container">
     <header>
       <h1>Outubro Macabro: 31 Dias de Mistério e Sabor</h1>
@@ -99,19 +96,7 @@
 
       <h3>Todos os envios (ordem de envio)</h3>
       <div class="listings">
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Nick</th>
-              <th>Pontos</th>
-              <th>Tempo (s)</th>
-              <th>Data / Hora</th>
-              <th id="adminActionsHeader" style="display:none">Ações</th>
-            </tr>
-          </thead>
-          <tbody id="allSubmissions"></tbody>
-        </table>
+        <table><thead><tr><th>#</th><th>Nick</th><th>Pontos</th><th>Tempo (s)</th><th>Data / Hora</th><th>Ações</th></tr></thead><tbody id="allSubmissions"></tbody></table>
       </div>
 
       <div id="adminArea" style="display:none" class="admin-panel card">
@@ -123,6 +108,15 @@
         <div style="font-size:13px;opacity:0.9">Ações administrativas: deletar, editar cada envio. Use com cuidado.</div>
       </div>
     </div>
+    
+    <div id="finalizadoExtra">
+        <h2 style="margin-top: 20px;">Quiz Finalizado!</h2>
+        <div style="margin-top: 10px;">
+             <button class="btn" style="background:#e0e0e0; color: black;">Salvar Resultado</button>
+             <button class="btn" style="background:#6b2b8a; color: #fff;">Ver Pódio</button>
+        </div>
+    </div>
+
 
     <footer>Feito por: luis</footer>
   </div>
@@ -131,17 +125,6 @@
 
   <audio id="negativeSound"></audio>
   <audio id="positiveSound"></audio>
-
-    <div id="endGameModal">
-    <div id="endGameModalContent">
-      <h3>Quiz Finalizado!</h3>
-      <div id="modalData">
-              </div>
-      <p id="saveMessage" style="color:#ffcc00; font-weight:600; display:none;">Salvando resultado...</p>
-      <button id="saveResultBtn" class="btn">Salvar Resultado</button>
-      <button id="closeModalBtn" class="btn" style="background:#6b2b8a;color:#fff;margin-top:10px;">Ver Pódio</button>
-    </div>
-  </div>
 
     <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
@@ -176,7 +159,6 @@
     ];
 
     // DOM
-    const quizBody = document.getElementById('quizBody');
     const loginView = document.getElementById('loginView');
     const gameView = document.getElementById('gameView');
     const resultsView = document.getElementById('resultsView');
@@ -202,15 +184,6 @@
     const adminArea = document.getElementById('adminArea');
     const adminRebootBtn = document.getElementById('adminReboot');
     const adminViewPodiumBtn = document.getElementById('adminViewPodium');
-    const adminActionsHeader = document.getElementById('adminActionsHeader'); // Novo
-
-    // Novo: Modal
-    const endGameModal = document.getElementById('endGameModal');
-    const modalData = document.getElementById('modalData');
-    const saveResultBtn = document.getElementById('saveResultBtn');
-    const closeModalBtn = document.getElementById('closeModalBtn');
-    const saveMessage = document.getElementById('saveMessage');
-
 
     // State
     let shuffled = [];
@@ -221,10 +194,8 @@
     let currentUser = null;
     let gameStartTs = null;
     let gameEndTs = null;
-    let finalSubmissionData = null; // Novo: Para armazenar o resultado final antes de salvar
 
     const SUBMISSIONS_COLLECTION = 'submissions';
-    let isAdmin = false; // Novo
 
     // small beep fallback
     function mkBeep(freq, dur){
@@ -241,8 +212,6 @@
     function normalizeAnswer(s){ if(!s) return ''; return s.toLowerCase().trim().normalize('NFD').replace(/\p{Diacritic}/gu, ''); }
     function escapeHtml(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;') }
     function formatDateTime(d){ return d.toLocaleString('pt-BR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}) }
-    // Novo: Inclui milissegundos para desempate mais preciso (embora não apareça no front)
-    function formatDateTimeFull(d){ return d.toLocaleString('pt-BR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',fractionalSecondDigits:3}) }
 
     // Firebase helpers
     async function nickExistsInDb(nick){
@@ -279,26 +248,23 @@
     startBtn.addEventListener('click', async ()=>{
       const nick = nickInput.value.trim();
       if(!nick){ showLoginMessage('Informe um nick válido.'); return; }
-
+        
+      // CORREÇÃO/AJUSTE: Removemos o botão de resultado inline caso ele exista antes de qualquer outra ação.
+      const existing = document.getElementById('viewResultInline'); 
+      if(existing) existing.remove();
+        
       // Admin shortcut
       if(nick === 'admin123'){
         const pass = prompt('Senha de admin:');
         if(pass === '123456'){
-          isAdmin = true; // Define como admin
           adminArea.style.display='block';
-          adminActionsHeader.style.display = 'table-cell'; // Mostra header de Ações
           renderAdminPanel();
           showView('results');
         } else {
           showLoginMessage('Senha de admin incorreta.');
         }
         return;
-      } else {
-        isAdmin = false; // Garante que não é admin
-        adminArea.style.display='none';
-        adminActionsHeader.style.display = 'none'; // Esconde header de Ações
       }
-
 
       // check DB for existing nick
       let exists = false;
@@ -306,9 +272,16 @@
 
       if(exists){
         showLoginMessage('Só é permitido jogar apenas uma Vez!');
-        const viewBtn = document.createElement('button'); viewBtn.className='btn'; viewBtn.style.background='#6b2b8a'; viewBtn.textContent='Ver Resultado!';
+        const viewBtn = document.createElement('button'); viewBtn.className='btn'; viewBtn.style.background='#6b2b8a'; viewBtn.style.color='#fff'; viewBtn.textContent='Ver Resultado!';
         viewBtn.onclick = ()=>{ renderResultsForNick(nick); showView('results'); };
-        const existing = document.getElementById('viewResultInline'); if(existing) existing.remove(); viewBtn.id='viewResultInline'; loginView.appendChild(viewBtn);
+        viewBtn.id='viewResultInline'; 
+        // Adiciona o botão em uma nova linha para ficar visualmente limpo
+        const loginButtonsDiv = loginView.querySelector('div[style="margin-top:12px;display:flex;gap:10px;align-items:center"]');
+        if(loginButtonsDiv) {
+            loginButtonsDiv.parentElement.insertBefore(viewBtn, loginButtonsDiv.nextSibling);
+        } else {
+            loginView.appendChild(viewBtn);
+        }
         return;
       }
 
@@ -319,24 +292,7 @@
     viewResultsBtn.addEventListener('click', ()=>{ renderAllResults(); showView('results'); });
 
     // countdown before game
-    function startCountdownBeforeGame(){
-      showView('game');
-      quizBody.classList.add('blur-active'); // Adiciona blur
-      countdownBig.style.display='flex';
-      let n=5;
-      countdownBig.textContent = n;
-      const intr=setInterval(()=>{
-        n--;
-        if(n>0) countdownBig.textContent = n;
-        else if(n===0) countdownBig.textContent = 'Valendo!';
-        else {
-          clearInterval(intr);
-          countdownBig.style.display='none';
-          quizBody.classList.remove('blur-active'); // Remove blur
-          beginGame();
-        }
-      },900);
-    }
+    function startCountdownBeforeGame(){ showView('game'); countdownBig.style.display='flex'; let n=5; countdownBig.textContent = n; const intr=setInterval(()=>{ n--; if(n>0) countdownBig.textContent = n; else if(n===0) countdownBig.textContent = 'Valendo!'; else { clearInterval(intr); countdownBig.style.display='none'; beginGame(); } },900); }
 
     function beginGame(){
       shuffled = [...characters];
@@ -387,63 +343,31 @@
       }
     }
 
-    // Novo: Lógica de Fim de Jogo e Modal de Salvar
     async function finishGame(){
       gameEndTs = Date.now();
       if(perQuestionTimer) clearInterval(perQuestionTimer);
       const totalTimeSec = Math.round((gameEndTs - gameStartTs)/1000);
-      finalSubmissionData = { nick: currentUser, score: score, timeSec: totalTimeSec, timestamp: gameEndTs };
-
-      // Exibir Modal de Fim de Jogo
-      const d = new Date(finalSubmissionData.timestamp);
-      modalData.innerHTML = `
-        <p>Seu Nick: <strong>${escapeHtml(finalSubmissionData.nick)}</strong></p>
-        <p>Pontuação: <strong>${finalSubmissionData.score}</strong></p>
-        <p>Tempo Total: <strong>${finalSubmissionData.timeSec} s</strong></p>
-        <p style="font-size:14px; opacity:0.8;">Envio: ${formatDateTimeFull(d)}</p>
-      `;
-      saveResultBtn.disabled = false;
-      saveMessage.style.display = 'none';
-      endGameModal.style.display = 'flex';
-    }
-
-    // Novo: Event Listener para Salvar Resultado
-    saveResultBtn.addEventListener('click', async ()=>{
-      if(!finalSubmissionData || saveResultBtn.disabled) return;
-
-      saveResultBtn.disabled = true;
-      saveMessage.textContent = 'Salvando resultado...';
-      saveMessage.style.display = 'block';
+      const submission = { nick: currentUser, score: score, timeSec: totalTimeSec, timestamp: Date.now() };
 
       let saved = false;
-      try{
-        saved = await saveSubmissionToDb(finalSubmissionData);
-      }catch(e){
-        console.warn('save error', e);
+      try{ saved = await saveSubmissionToDb(submission); }catch(e){ console.warn('save error', e); saved = false; }
+
+      if(!saved){
+        const key = 'quiz_submissions_fallback';
+        const arr = JSON.parse(localStorage.getItem(key)||'[]');
+        arr.push(submission);
+        localStorage.setItem(key, JSON.stringify(arr));
       }
 
-      if(saved){
-        saveMessage.textContent = 'Resultado salvo com sucesso!';
-        saveMessage.style.color = '#7bff7b';
-        // marca localmente para evitar que jogue de novo (mesmo se DB falhar)
-        const playedKey = 'quiz_played_nicks_v1';
-        const played = JSON.parse(localStorage.getItem(playedKey)||'[]');
-        played.push(currentUser);
-        localStorage.setItem(playedKey, JSON.stringify(played));
-      } else {
-        saveMessage.textContent = 'Erro ao salvar! Tente novamente.';
-        saveMessage.style.color = '#ff4b4b';
-        saveResultBtn.disabled = false;
-      }
-      setTimeout(()=>{ saveMessage.style.display = 'none'; }, 3000);
-      saveResultBtn.style.display = 'none'; // Esconde botão de salvar após salvar ou erro
-    });
+      // mark nick locally also so even if DB later fails we have record
+      const playedKey = 'quiz_played_nicks_v1';
+      const played = JSON.parse(localStorage.getItem(playedKey)||'[]');
+      played.push(currentUser);
+      localStorage.setItem(playedKey, JSON.stringify(played));
 
-    closeModalBtn.addEventListener('click', ()=>{
-      endGameModal.style.display = 'none';
-      renderAllResults(); // Atualiza e exibe os resultados
+      renderAllResults();
       showView('results');
-    });
+    }
 
     // Results & Admin
     async function renderAllResults(){
@@ -453,26 +377,23 @@
       const fallback = JSON.parse(localStorage.getItem('quiz_submissions_fallback')||'[]');
       subs = subs.concat(fallback.map(s=>({ id:null, ...s })));
 
-      // podium sort: score desc, timeSec asc (Critério de desempate)
+      // podium sort: score desc, timestamp asc
       const podiumSorted = [...subs].sort((a,b)=>{
         if(b.score !== a.score) return b.score - a.score;
-        // Desempate por tempo: menor tempo fica na frente (asc)
-        return (a.timeSec || 999999) - (b.timeSec || 999999);
+        return (a.timestamp||0) - (b.timestamp||0);
       });
 
       // render podium
       podiumContainer.innerHTML = '';
       const top3 = [podiumSorted[0]||null, podiumSorted[1]||null, podiumSorted[2]||null];
-      const order = [1,0,2]; // 2º, 1º, 3º para renderização do pódio
-      const classes = ['second', 'first', 'third']; // Classes correspondentes
-
-      order.forEach((pos, idx)=>{
+      const order = [1,0,2];
+      order.forEach((pos)=>{
         const data = top3[pos];
         const placeDiv = document.createElement('div');
-        placeDiv.className = `place ${classes[idx]}`; // Usa classes correspondentes
+        placeDiv.className = 'place ' + (pos===1? 'first' : (pos===0? 'second':'third'));
         if(data){
           const placeNum = pos===1? '1º' : (pos===0? '2º':'3º');
-          placeDiv.innerHTML = `<div style="font-size:14px;font-weight:800">${placeNum}</div><div style="margin-top:6px;font-weight:800">${escapeHtml(data.nick)}</div><div style="margin-top:6px;font-weight:700">${data.score} pts (${data.timeSec}s)</div>`;
+          placeDiv.innerHTML = `<div style="font-size:14px;font-weight:800">${placeNum}</div><div style="margin-top:6px;font-weight:800">${escapeHtml(data.nick)}</div><div style="margin-top:6px;font-weight:700">${data.score} pts</div>`;
         } else {
           placeDiv.innerHTML = `<div style="font-size:14px;opacity:0.9">-</div>`;
         }
@@ -482,91 +403,82 @@
       // list all submissions by chronological order
       allSubmissionsTbody.innerHTML = '';
       const byOrder = [...subs].sort((a,b)=>(a.timestamp||0) - (b.timestamp||0));
-      
-      // Esconde a coluna de Ações para não-admin
-      adminActionsHeader.style.display = isAdmin ? 'table-cell' : 'none';
-
       byOrder.forEach((s, idx)=>{
         const tr = document.createElement('tr');
         const d = new Date(s.timestamp||Date.now());
-        tr.innerHTML = `<td>${idx+1}</td><td>${escapeHtml(s.nick)}</td><td>${s.score}</td><td>${s.timeSec}</td><td>${formatDateTime(d)}</td><td class="admin-actions-cell" style="display:${isAdmin?'table-cell':'none'}"></td>`;
-        const actionsTd = tr.querySelector('.admin-actions-cell');
+        tr.innerHTML = `<td>${idx+1}</td><td>${escapeHtml(s.nick)}</td><td>${s.score}</td><td>${s.timeSec}</td><td>${formatDateTime(d)}</td><td></td>`;
+        const actionsTd = tr.querySelector('td:last-child');
 
-        if(isAdmin && actionsTd){ // Apenas adiciona botões se for admin
-          // delete
-          const delBtn = document.createElement('button');
-          delBtn.className = 'btn';
-          delBtn.style.cssText = 'background:#b31b1b; padding: 6px 8px; font-size: 12px; margin-right: 5px;';
-          delBtn.textContent = 'Deletar';
-          delBtn.onclick = async ()=>{
-            if(!confirm(`Deletar o envio de ${s.nick} (ID: ${s.id || 'Local'})?`)) return;
-            if(s.id){ await deleteSubmissionById(s.id); } else {
-              // local fallback removal (melhoria de UX: deletar o local)
-              const key = 'quiz_submissions_fallback';
-              let arr = JSON.parse(localStorage.getItem(key)||'[]');
-              arr = arr.filter(item => item.nick !== s.nick || item.timestamp !== s.timestamp); // Filtra por nick e timestamp
-              localStorage.setItem(key, JSON.stringify(arr));
-            }
-            renderAllResults();
-          };
+        // delete
+        const delBtn = document.createElement('button');
+        delBtn.className = 'btn';
+        delBtn.style.background = '#b31b1b';
+        delBtn.textContent = 'Deletar';
+        delBtn.onclick = async ()=>{
+          if(!confirm('Deletar este envio?')) return;
+          if(s.id){ await deleteSubmissionById(s.id); } else {
+            // local fallback removal
+            const key = 'quiz_submissions_fallback';
+            const arr = JSON.parse(localStorage.getItem(key)||'[]');
+            // find by index among fallback only (more robust could match nick+timestamp)
+            arr.splice(idx,1);
+            localStorage.setItem(key, JSON.stringify(arr));
+          }
+          renderAllResults();
+        };
 
-          // edit
-          const editBtn = document.createElement('button');
-          editBtn.className = 'btn';
-          editBtn.style.cssText = 'background:#6b2b8a; padding: 6px 8px; font-size: 12px; margin-right: 5px;';
-          editBtn.textContent = 'Editar';
-          editBtn.onclick = async ()=>{
-            const newNick = prompt('Nick:', s.nick);
-            if(newNick === null) return;
-            const newScore = parseInt(prompt('Pontuação:', s.score), 10);
-            if(isNaN(newScore)) return alert('Pontuação inválida');
-            const newTime = parseInt(prompt('Tempo (s):', s.timeSec), 10);
-            if(isNaN(newTime)) return alert('Tempo inválido');
-            const newTimestamp = s.timestamp || Date.now();
-            const updated = { nick: newNick, score: newScore, timeSec: newTime, timestamp: newTimestamp };
-            if(s.id){ await updateSubmissionById(s.id, updated); } else {
-              // local fallback removal (melhoria de UX: editar o local)
-              const key = 'quiz_submissions_fallback';
-              let arr = JSON.parse(localStorage.getItem(key)||'[]');
-              const indexToUpdate = arr.findIndex(item => item.nick === s.nick && item.timestamp === s.timestamp);
-              if(indexToUpdate !== -1) arr[indexToUpdate] = updated;
-              localStorage.setItem(key, JSON.stringify(arr));
-            }
-            renderAllResults();
-          };
+        // edit
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn';
+        editBtn.style.background = '#6b2b8a';
+        editBtn.textContent = 'Editar';
+        editBtn.onclick = async ()=>{
+          const newNick = prompt('Nick:', s.nick);
+          if(newNick === null) return;
+          const newScore = parseInt(prompt('Pontuação:', s.score), 10);
+          if(isNaN(newScore)) return alert('Pontuação inválida');
+          const newTime = parseInt(prompt('Tempo (s):', s.timeSec), 10);
+          if(isNaN(newTime)) return alert('Tempo inválido');
+          const newTimestamp = s.timestamp || Date.now();
+          const updated = { nick: newNick, score: newScore, timeSec: newTime, timestamp: newTimestamp };
+          if(s.id){ await updateSubmissionById(s.id, updated); } else {
+            const key = 'quiz_submissions_fallback';
+            const arr = JSON.parse(localStorage.getItem(key)||'[]');
+            arr[idx] = updated;
+            localStorage.setItem(key, JSON.stringify(arr));
+          }
+          renderAllResults();
+        };
 
-          // view podium (scroll to top)
-          const viewPodBtn = document.createElement('button');
-          viewPodBtn.className = 'btn';
-          viewPodBtn.style.cssText = 'background:#333; padding: 6px 8px; font-size: 12px;';
-          viewPodBtn.textContent = 'Ver pódio';
-          viewPodBtn.onclick = ()=>{ window.scrollTo({ top: 0, behavior: 'smooth' }); };
+        // view podium (scroll to top)
+        const viewPodBtn = document.createElement('button');
+        viewPodBtn.className = 'btn';
+        viewPodBtn.style.background = '#333';
+        viewPodBtn.textContent = 'Ver pódio';
+        viewPodBtn.onclick = ()=>{ window.scrollTo({ top: 0, behavior: 'smooth' }); };
 
-          actionsTd.appendChild(delBtn);
-          actionsTd.appendChild(editBtn);
-          actionsTd.appendChild(viewPodBtn);
-        }
-
+        actionsTd.appendChild(delBtn);
+        actionsTd.appendChild(editBtn);
+        actionsTd.appendChild(viewPodBtn);
         allSubmissionsTbody.appendChild(tr);
       });
 
       if(currentUser){
-        // Reutiliza a ordenação para encontrar o melhor resultado do usuário
-        const found = podiumSorted.find(s=> s.nick.toLowerCase() === currentUser.toLowerCase());
+        const found = byOrder.slice().reverse().find(s=> s.nick.toLowerCase() === currentUser.toLowerCase());
         if(found) showUserBox(found); else userResultBox.style.display='none';
       } else userResultBox.style.display='none';
     }
 
-    function renderResultsForNick(nick){ currentUser=nick; renderAllResults(); showView('results'); }
+    function renderResultsForNick(nick){ renderAllResults(); showView('results'); }
 
     function showUserBox(sub){
       userResultBox.style.display = 'block';
       const d = new Date(sub.timestamp||Date.now());
-      userResultBox.innerHTML = `<strong>Seu melhor resultado</strong><div style="margin-top:6px">Nick: <strong>${escapeHtml(sub.nick)}</strong></div><div>Pontos: <strong>${sub.score}</strong></div><div>Tempo: <strong>${sub.timeSec} s</strong></div><div>Data/Hora: <strong>${formatDateTime(d)}</strong></div>`;
+      userResultBox.innerHTML = `<strong>Seu resultado</strong><div style="margin-top:6px">Nick: <strong>${escapeHtml(sub.nick)}</strong></div><div>Pontos: <strong>${sub.score}</strong></div><div>Tempo para realizar o questionário: <strong>${sub.timeSec} s</strong></div><div>Data / Hora do envio: <strong>${formatDateTime(d)}</strong></div>`;
     }
 
     // Admin functions
-    async function renderAdminPanel(){ adminArea.style.display = 'block'; isAdmin=true; adminActionsHeader.style.display = 'table-cell'; renderAllResults(); }
+    async function renderAdminPanel(){ adminArea.style.display = 'block'; renderAllResults(); }
     adminRebootBtn.addEventListener('click', async ()=>{
       if(!confirm('Apagar TODOS os resultados do banco? Esta ação é irreversível.')) return;
       try{
@@ -587,7 +499,7 @@
 
     // prevent accidental reload during game
     window.addEventListener('beforeunload', (e)=>{
-      if(gameStartTs && !gameEndTs && !endGameModal.style.display === 'flex'){
+      if(gameStartTs && !gameEndTs){
         e.preventDefault();
         e.returnValue = 'Se você sair agora perderá seu progresso.';
       }
@@ -596,12 +508,7 @@
     // realtime update attempt (if allowed by rules)
     try{
       const qAll = query(collection(db, SUBMISSIONS_COLLECTION), orderBy('timestamp','asc'));
-      onSnapshot(qAll, (snapshot)=>{
-        if(document.body.contains(allSubmissionsTbody) && resultsView.style.display === 'block'){
-          // Apenas renderiza se a tela de resultados estiver ativa para evitar sobrecarga desnecessária
-          renderAllResults();
-        }
-      });
+      onSnapshot(qAll, ()=>{ if(document.body.contains(allSubmissionsTbody)) renderAllResults(); });
     }catch(e){ /* ignore if cannot subscribe */ }
 
   </script>

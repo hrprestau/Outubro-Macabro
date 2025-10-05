@@ -29,14 +29,15 @@
     .answerBox input{flex:1;padding:12px;border-radius:10px;border:2px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);color:#fff;font-size:16px}
     .answerBox input.wrong{border-color:#ff4b4b;background:rgba(255,75,75,0.06);animation:shake .3s}
     @keyframes shake{0%{transform:translateX(-3px)}50%{transform:translateX(3px)}100%{transform:translateX(0)}}
-    .countdownBig{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-size:96px;font-weight:900;color:var(--accent);pointer-events:none}
+    .countdownBig{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-size:96px;font-weight:900;color:var(--accent);pointer-events:none;z-index:1500}
     .smallNote{font-size:12px;opacity:0.9}
     #resultsView{display:none}
     .podium{display:flex;gap:12px;align-items:end;justify-content:center;margin:20px 0}
     .podium .place{width:160px;text-align:center;padding:14px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));}
-    .first{height:180px;background:linear-gradient(180deg,#ffe3bf, #ffd59a);color:#331900}
-    .second{height:140px;background:linear-gradient(180deg,#e6e6ff,#cfcfff);color:#0b0033}
-    .third{height:120px;background:linear-gradient(180deg,#ffd6e6,#ffcce0);color:#3b0019}
+    /* updated colors */
+    .first{height:180px;background:linear-gradient(180deg,#D4AF37,#E6C85C);color:#231900}
+    .second{height:140px;background:linear-gradient(180deg,#C0C0C0,#D7D7D7);color:#0b0b0b}
+    .third{height:120px;background:linear-gradient(180deg,#CD7F32,#D99663);color:#2b0b00}
     .listings{margin-top:12px}
     table{width:100%;border-collapse:collapse}
     th,td{padding:8px;border-bottom:1px dashed rgba(255,255,255,0.03);text-align:left}
@@ -44,6 +45,30 @@
     .admin-panel{margin-top:12px}
     .admin-actions{display:flex;gap:8px;flex-wrap:wrap}
     @media (max-width:700px){.characterCard{width:90vw;height:60vw}.timer{font-size:28px}.countdownBig{font-size:64px}}
+    /* Blur during countdown */
+    .countdown-blur .container { filter: blur(6px) saturate(0.9); transition: filter 0.25s ease; -webkit-filter: blur(6px) saturate(0.9); }
+    /* Modal for save results */
+    #saveModal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      background: rgba(0,0,0,0.5);
+    }
+    #saveModal .modalCard {
+      width: 92%;
+      max-width: 520px;
+      border-radius: 12px;
+      padding: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+      color: #fff;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+    }
+    #saveModal .modalCard h3{margin:0 0 8px 0}
+    #saveModal .modalCard .meta{margin:8px 0;padding:10px;border-radius:8px;background:rgba(255,255,255,0.02)}
+    #saveModal .modalActions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
   </style>
 </head>
 <body>
@@ -109,6 +134,20 @@
 
   <div id="countdownBig" class="countdownBig" style="display:none"></div>
 
+  <!-- Modal para salvar resultado -->
+  <div id="saveModal">
+    <div class="modalCard">
+      <h3>Resultado concluído</h3>
+      <div class="meta" id="modalMeta">
+        <!-- preenchido dinamicamente -->
+      </div>
+      <div class="modalActions">
+        <button id="cancelSaveBtn" class="btn" style="background:#666;color:#fff">Fechar</button>
+        <button id="confirmSaveBtn" class="btn">Salvar Resultado</button>
+      </div>
+    </div>
+  </div>
+
   <audio id="negativeSound"></audio>
   <audio id="positiveSound"></audio>
 
@@ -172,6 +211,11 @@
     const adminRebootBtn = document.getElementById('adminReboot');
     const adminViewPodiumBtn = document.getElementById('adminViewPodium');
 
+    const saveModal = document.getElementById('saveModal');
+    const modalMeta = document.getElementById('modalMeta');
+    const confirmSaveBtn = document.getElementById('confirmSaveBtn');
+    const cancelSaveBtn = document.getElementById('cancelSaveBtn');
+
     // State
     let shuffled = [];
     let currentIndex = 0;
@@ -181,6 +225,8 @@
     let currentUser = null;
     let gameStartTs = null;
     let gameEndTs = null;
+    let pendingSubmission = null; // holds submission until user clicks "Salvar Resultado"
+    let isAdmin = false; // controla se o usuário atual é admin
 
     const SUBMISSIONS_COLLECTION = 'submissions';
 
@@ -209,6 +255,12 @@
         const lower = nick.toLowerCase();
         for(const d of snap.docs){ if(String(d.data().nick).toLowerCase()===lower) return true; }
       }catch(e){ console.warn('nickExistsInDb err', e); }
+      // also check local fallback
+      const fallback = JSON.parse(localStorage.getItem('quiz_submissions_fallback')||'[]');
+      for(const s of fallback){ if(String(s.nick).toLowerCase() === (nick.toLowerCase())) return true; }
+      // also check local played nicks
+      const played = JSON.parse(localStorage.getItem('quiz_played_nicks_v1')||'[]');
+      if(played.includes(nick)) return true;
       return false;
     }
 
@@ -240,8 +292,12 @@
       if(nick === 'admin123'){
         const pass = prompt('Senha de admin:');
         if(pass === '123456'){
+          isAdmin = true;
           adminArea.style.display='block';
           renderAdminPanel();
+          // mark currentUser as admin to allow admin-only actions while viewing
+          currentUser = nick;
+          nickBadge.textContent = currentUser;
           showView('results');
         } else {
           showLoginMessage('Senha de admin incorreta.');
@@ -255,7 +311,7 @@
 
       if(exists){
         showLoginMessage('Só é permitido jogar apenas uma Vez!');
-        const viewBtn = document.createElement('button'); viewBtn.className='btn'; viewBtn.style.background='#6b2b8a'; viewBtn.textContent='Ver Resultado!';
+        const viewBtn = document.createElement('button'); viewBtn.className='btn'; viewBtn.style.background='#6b2b8a'; viewBtn.style.color='#fff'; viewBtn.textContent='Ver Resultado!';
         viewBtn.onclick = ()=>{ renderResultsForNick(nick); showView('results'); };
         const existing = document.getElementById('viewResultInline'); if(existing) existing.remove(); viewBtn.id='viewResultInline'; loginView.appendChild(viewBtn);
         return;
@@ -268,12 +324,31 @@
     viewResultsBtn.addEventListener('click', ()=>{ renderAllResults(); showView('results'); });
 
     // countdown before game
-    function startCountdownBeforeGame(){ showView('game'); countdownBig.style.display='flex'; let n=5; countdownBig.textContent = n; const intr=setInterval(()=>{ n--; if(n>0) countdownBig.textContent = n; else if(n===0) countdownBig.textContent = 'Valendo!'; else { clearInterval(intr); countdownBig.style.display='none'; beginGame(); } },900); }
+    function startCountdownBeforeGame(){ 
+      showView('game'); 
+      // add blur class to body to blur container (only during countdown)
+      document.body.classList.add('countdown-blur');
+      countdownBig.style.display='flex'; 
+      let n=5; 
+      countdownBig.textContent = n; 
+      const intr=setInterval(()=>{
+        n--;
+        if(n>0) countdownBig.textContent = n;
+        else if(n===0) countdownBig.textContent = 'Valendo!';
+        else { 
+          clearInterval(intr); 
+          countdownBig.style.display='none';
+          // remove blur
+          document.body.classList.remove('countdown-blur');
+          beginGame(); 
+        } 
+      },900); 
+    }
 
     function beginGame(){
       shuffled = [...characters];
       for(let i=shuffled.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]] }
-      currentIndex=0; score=0; scoreEl.textContent=score; answerInput.value=''; gameStartTs = Date.now(); showQuestion(currentIndex); answerInput.focus();
+      currentIndex=0; score=0; scoreEl.textContent=score; answerInput.value=''; gameStartTs = Date.now(); gameEndTs = null; showQuestion(currentIndex); answerInput.focus();
     }
 
     function showQuestion(idx){
@@ -303,6 +378,7 @@
     answerInput && answerInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') handleSubmit(); });
 
     function handleSubmit(){
+      if(currentIndex >= shuffled.length) return;
       const ans = normalizeAnswer(answerInput.value);
       const expected = normalizeAnswer(shuffled[currentIndex].name);
       if(!ans){ answerInput.classList.add('wrong'); setTimeout(()=>answerInput.classList.remove('wrong'),600); return; }
@@ -319,31 +395,71 @@
       }
     }
 
-    async function finishGame(){
+    // finishGame agora mostra modal com dados e espera salvar
+    function finishGame(){
       gameEndTs = Date.now();
       if(perQuestionTimer) clearInterval(perQuestionTimer);
       const totalTimeSec = Math.round((gameEndTs - gameStartTs)/1000);
       const submission = { nick: currentUser, score: score, timeSec: totalTimeSec, timestamp: Date.now() };
 
+      // keep pending until user clicks "Salvar Resultado"
+      pendingSubmission = submission;
+
+      // show modal with details
+      showSaveModal(submission);
+    }
+
+    function showSaveModal(sub){
+      const d = new Date(sub.timestamp || Date.now());
+      modalMeta.innerHTML = `
+        <div>Nick: <strong>${escapeHtml(sub.nick)}</strong></div>
+        <div>Pontos: <strong>${sub.score}</strong></div>
+        <div>Tempo necessário: <strong>${sub.timeSec} s</strong></div>
+        <div>Data / Hora: <strong>${formatDateTime(d)}</strong></div>
+      `;
+      saveModal.style.display = 'flex';
+    }
+
+    cancelSaveBtn.addEventListener('click', ()=>{
+      // fechar modal e mostrar view results (sem salvar)
+      saveModal.style.display = 'none';
+      pendingSubmission = null;
+      // show results (they will not include this attempt until saved)
+      renderAllResults();
+      showView('results');
+    });
+
+    confirmSaveBtn.addEventListener('click', async ()=>{
+      if(!pendingSubmission) return;
+      confirmSaveBtn.disabled = true;
+      confirmSaveBtn.textContent = 'Salvando...';
+
+      // try save to DB; fallback to localStorage if fails
       let saved = false;
-      try{ saved = await saveSubmissionToDb(submission); }catch(e){ console.warn('save error', e); saved = false; }
+      try{ saved = await saveSubmissionToDb(pendingSubmission); }catch(e){ console.warn('save error', e); saved = false; }
 
       if(!saved){
         const key = 'quiz_submissions_fallback';
         const arr = JSON.parse(localStorage.getItem(key)||'[]');
-        arr.push(submission);
+        arr.push(pendingSubmission);
         localStorage.setItem(key, JSON.stringify(arr));
       }
 
-      // mark nick locally also so even if DB later fails we have record
+      // mark nick locally so it cannot play again
       const playedKey = 'quiz_played_nicks_v1';
       const played = JSON.parse(localStorage.getItem(playedKey)||'[]');
-      played.push(currentUser);
+      played.push(pendingSubmission.nick);
       localStorage.setItem(playedKey, JSON.stringify(played));
 
+      confirmSaveBtn.disabled = false;
+      confirmSaveBtn.textContent = 'Salvar Resultado';
+      saveModal.style.display = 'none';
+      pendingSubmission = null;
+
+      // render results now with new saved data
       renderAllResults();
       showView('results');
-    }
+    });
 
     // Results & Admin
     async function renderAllResults(){
@@ -353,22 +469,24 @@
       const fallback = JSON.parse(localStorage.getItem('quiz_submissions_fallback')||'[]');
       subs = subs.concat(fallback.map(s=>({ id:null, ...s })));
 
-      // podium sort: score desc, timestamp asc
+      // podium sort: score desc, timestamp asc (tie-breaker)
       const podiumSorted = [...subs].sort((a,b)=>{
-        if(b.score !== a.score) return b.score - a.score;
+        if((b.score||0) !== (a.score||0)) return (b.score||0) - (a.score||0);
+        // if tie on score, earlier timestamp (smaller) wins
         return (a.timestamp||0) - (b.timestamp||0);
       });
 
       // render podium
       podiumContainer.innerHTML = '';
       const top3 = [podiumSorted[0]||null, podiumSorted[1]||null, podiumSorted[2]||null];
-      const order = [1,0,2];
-      order.forEach((pos)=>{
-        const data = top3[pos];
+      // layout order: 2nd, 1st, 3rd visually (kept same as original but classes updated)
+      const layout = [1,0,2];
+      layout.forEach((posIdx)=>{
+        const data = top3[posIdx];
         const placeDiv = document.createElement('div');
-        placeDiv.className = 'place ' + (pos===1? 'first' : (pos===0? 'second':'third'));
+        placeDiv.className = 'place ' + (posIdx===1? 'first' : (posIdx===0? 'second':'third'));
         if(data){
-          const placeNum = pos===1? '1º' : (pos===0? '2º':'3º');
+          const placeNum = posIdx===1? '1º' : (posIdx===0? '2º':'3º');
           placeDiv.innerHTML = `<div style="font-size:14px;font-weight:800">${placeNum}</div><div style="margin-top:6px;font-weight:800">${escapeHtml(data.nick)}</div><div style="margin-top:6px;font-weight:700">${data.score} pts</div>`;
         } else {
           placeDiv.innerHTML = `<div style="font-size:14px;opacity:0.9">-</div>`;
@@ -385,60 +503,68 @@
         tr.innerHTML = `<td>${idx+1}</td><td>${escapeHtml(s.nick)}</td><td>${s.score}</td><td>${s.timeSec}</td><td>${formatDateTime(d)}</td><td></td>`;
         const actionsTd = tr.querySelector('td:last-child');
 
-        // delete
-        const delBtn = document.createElement('button');
-        delBtn.className = 'btn';
-        delBtn.style.background = '#b31b1b';
-        delBtn.textContent = 'Deletar';
-        delBtn.onclick = async ()=>{
-          if(!confirm('Deletar este envio?')) return;
-          if(s.id){ await deleteSubmissionById(s.id); } else {
-            // local fallback removal
-            const key = 'quiz_submissions_fallback';
-            const arr = JSON.parse(localStorage.getItem(key)||'[]');
-            // find by index among fallback only (more robust could match nick+timestamp)
-            arr.splice(idx,1);
-            localStorage.setItem(key, JSON.stringify(arr));
-          }
-          renderAllResults();
-        };
+        // Only admin sees actions
+        if(isAdmin){
+          // delete
+          const delBtn = document.createElement('button');
+          delBtn.className = 'btn';
+          delBtn.style.background = '#b31b1b';
+          delBtn.textContent = 'Deletar';
+          delBtn.onclick = async ()=>{
+            if(!confirm('Deletar este envio?')) return;
+            if(s.id){ await deleteSubmissionById(s.id); } else {
+              // local fallback removal (remove by matching nick+timestamp to be safer)
+              const key = 'quiz_submissions_fallback';
+              const arr = JSON.parse(localStorage.getItem(key)||'[]');
+              const index = arr.findIndex(el => (el.nick === s.nick && String(el.timestamp) === String(s.timestamp)));
+              if(index !== -1) arr.splice(index,1);
+              localStorage.setItem(key, JSON.stringify(arr));
+            }
+            renderAllResults();
+          };
 
-        // edit
-        const editBtn = document.createElement('button');
-        editBtn.className = 'btn';
-        editBtn.style.background = '#6b2b8a';
-        editBtn.textContent = 'Editar';
-        editBtn.onclick = async ()=>{
-          const newNick = prompt('Nick:', s.nick);
-          if(newNick === null) return;
-          const newScore = parseInt(prompt('Pontuação:', s.score), 10);
-          if(isNaN(newScore)) return alert('Pontuação inválida');
-          const newTime = parseInt(prompt('Tempo (s):', s.timeSec), 10);
-          if(isNaN(newTime)) return alert('Tempo inválido');
-          const newTimestamp = s.timestamp || Date.now();
-          const updated = { nick: newNick, score: newScore, timeSec: newTime, timestamp: newTimestamp };
-          if(s.id){ await updateSubmissionById(s.id, updated); } else {
-            const key = 'quiz_submissions_fallback';
-            const arr = JSON.parse(localStorage.getItem(key)||'[]');
-            arr[idx] = updated;
-            localStorage.setItem(key, JSON.stringify(arr));
-          }
-          renderAllResults();
-        };
+          // edit
+          const editBtn = document.createElement('button');
+          editBtn.className = 'btn';
+          editBtn.style.background = '#6b2b8a';
+          editBtn.textContent = 'Editar';
+          editBtn.onclick = async ()=>{
+            const newNick = prompt('Nick:', s.nick);
+            if(newNick === null) return;
+            const newScore = parseInt(prompt('Pontuação:', s.score), 10);
+            if(isNaN(newScore)) return alert('Pontuação inválida');
+            const newTime = parseInt(prompt('Tempo (s):', s.timeSec), 10);
+            if(isNaN(newTime)) return alert('Tempo inválido');
+            const newTimestamp = s.timestamp || Date.now();
+            const updated = { nick: newNick, score: newScore, timeSec: newTime, timestamp: newTimestamp };
+            if(s.id){ await updateSubmissionById(s.id, updated); } else {
+              const key = 'quiz_submissions_fallback';
+              const arr = JSON.parse(localStorage.getItem(key)||'[]');
+              const index = arr.findIndex(el => (el.nick === s.nick && String(el.timestamp) === String(s.timestamp)));
+              if(index !== -1) arr[index] = updated;
+              localStorage.setItem(key, JSON.stringify(arr));
+            }
+            renderAllResults();
+          };
 
-        // view podium (scroll to top)
-        const viewPodBtn = document.createElement('button');
-        viewPodBtn.className = 'btn';
-        viewPodBtn.style.background = '#333';
-        viewPodBtn.textContent = 'Ver pódio';
-        viewPodBtn.onclick = ()=>{ window.scrollTo({ top: 0, behavior: 'smooth' }); };
+          // view podium (scroll to top)
+          const viewPodBtn = document.createElement('button');
+          viewPodBtn.className = 'btn';
+          viewPodBtn.style.background = '#333';
+          viewPodBtn.textContent = 'Ver pódio';
+          viewPodBtn.onclick = ()=>{ window.scrollTo({ top: 0, behavior: 'smooth' }); };
 
-        actionsTd.appendChild(delBtn);
-        actionsTd.appendChild(editBtn);
-        actionsTd.appendChild(viewPodBtn);
+          actionsTd.appendChild(delBtn);
+          actionsTd.appendChild(editBtn);
+          actionsTd.appendChild(viewPodBtn);
+        } else {
+          actionsTd.innerHTML = ''; // no actions for normal users
+        }
+
         allSubmissionsTbody.appendChild(tr);
       });
 
+      // show user's last result in userResultBox (if exists)
       if(currentUser){
         const found = byOrder.slice().reverse().find(s=> s.nick.toLowerCase() === currentUser.toLowerCase());
         if(found) showUserBox(found); else userResultBox.style.display='none';
@@ -471,6 +597,8 @@
     (function init(){
       showView('login');
       characters.forEach(c=>{ const i = new Image(); i.src = c.url; });
+      // attempt to show any locally-saved submissions in results
+      renderAllResults();
     })();
 
     // prevent accidental reload during game

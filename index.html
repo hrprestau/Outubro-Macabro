@@ -2,340 +2,214 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Quiz dos Personagens</title>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js"></script>
+  <title>Quiz Halloween</title>
   <style>
     body {
-      margin: 0;
       font-family: Arial, sans-serif;
-      background: #3b0a45;
-      color: white;
+      background: #2c003e;
+      color: #fff;
       text-align: center;
     }
-    h1 { color: orange; }
-    .login-container, .game-container, .admin-container, .result-container {
+
+    #quiz, #results, #adminPanel {
       display: none;
-      margin-top: 50px;
     }
-    input, button {
-      padding: 10px;
+
+    .question {
+      margin: 20px;
+      font-size: 20px;
+    }
+
+    button {
       margin: 10px;
-      border-radius: 8px;
+      padding: 10px 20px;
       border: none;
+      cursor: pointer;
+      border-radius: 8px;
     }
-    button { cursor: pointer; }
-    #timer {
-      font-size: 40px;
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      color: orange;
-    }
-    #score { font-size: 24px; color: orange; }
-    #quiz-image {
-      max-width: 250px;
-      margin: 20px auto;
-      display: block;
-    }
-    #answer {
-      width: 200px;
-      border: 2px solid #ccc;
-    }
-    #answer.error { border-color: red; }
-    footer {
-      margin-top: 50px;
-      font-size: 14px;
-      color: #ccc;
-    }
-    .countdown {
-      background: black;
-      color: white;
-      font-size: 80px;
+
+    .correct { background: green; color: white; }
+    .wrong { background: red; color: white; }
+
+    #countdownDiv {
       position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 5rem;
+      color: white;
+      z-index: 9999;
+    }
+
+    /* Pódio */
+    .podio {
       display: flex;
       justify-content: center;
-      align-items: center;
-      z-index: 999;
+      margin-top: 30px;
+      gap: 20px;
     }
-    table {
-      margin: 20px auto;
-      border-collapse: collapse;
-      width: 90%;
+    .podio div {
+      padding: 15px;
+      border-radius: 10px;
+      width: 120px;
+      text-align: center;
+      font-weight: bold;
+      color: black;
     }
-    th, td {
-      border: 1px solid #666;
-      padding: 10px;
-    }
-    .gold { background: gold; color: black; }
-    .silver { background: silver; color: black; }
-    .bronze { background: #cd7f32; color: black; }
-    .modal {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.8);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-    .modal-content {
-      background: #3b0a45;
-      padding: 20px;
-      border-radius: 12px;
-      width: 350px;
-      color: white;
-    }
+    .gold { background: gold; }
+    .silver { background: silver; }
+    .bronze { background: #cd7f32; }
   </style>
 </head>
 <body>
-  <div class="login-container" id="login">
-    <h1>Outubro Macabro: 31 Dias de Mistério e Sabor</h1>
-    <h2>Quiz dos personagens</h2>
-    <input type="text" id="nickname" placeholder="Digite seu nick"><br>
-    <button onclick="login()">Entrar</button>
-    <p id="login-msg"></p>
+  <h1>Quiz de Halloween 🎃</h1>
+
+  <div id="start">
+    <input type="text" id="nickname" placeholder="Digite seu nick">
+    <button onclick="startGame()">Iniciar Quiz</button>
   </div>
 
-  <div id="countdown" class="countdown"></div>
+  <div id="quiz"></div>
+  <div id="results"></div>
 
-  <div class="game-container" id="game">
-    <div id="timer">30</div>
-    <div id="score">Score: 0</div>
-    <img id="quiz-image" src="" alt="Personagem">
-    <input type="text" id="answer" placeholder="Quem é?">
-    <button onclick="checkAnswer()">Responder</button>
-  </div>
-
-  <div class="modal" id="finalModal">
-    <div class="modal-content">
-      <h2>Resultado Final</h2>
-      <p id="finalInfo"></p>
-      <button onclick="saveResult()">Salvar resultado</button>
-    </div>
-  </div>
-
-  <div class="admin-container" id="admin">
-    <h1>Painel Admin</h1>
-    <table id="results-table">
+  <!-- Admin Panel -->
+  <div id="adminPanel">
+    <h2>Todos os envios</h2>
+    <table border="1" style="margin:0 auto; color:white;">
       <thead>
-        <tr>
-          <th>#</th><th>Nick</th><th>Pontos</th><th>Tempo (s)</th><th>Data / Hora</th><th>Ações</th>
-        </tr>
+        <tr><th>#</th><th>Nick</th><th>Pontos</th><th>Tempo (s)</th><th>Data/Hora</th><th>Ações</th></tr>
       </thead>
-      <tbody></tbody>
+      <tbody id="submissions"></tbody>
     </table>
-    <button onclick="reboot()">Reboot</button>
-    <button onclick="showPodio()">Ver pódio</button>
-    <div id="podio"></div>
   </div>
 
-  <footer>Feito por: luis</footer>
+  <!-- Sons -->
+  <audio id="soundCorrect" src="acerto.mp3"></audio>
+  <audio id="soundWrong" src="erro.mp3"></audio>
 
-  <audio id="sound-correct" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg"></audio>
-  <audio id="sound-wrong" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-firestore.js"></script>
+  <script>
+    // Config Firebase
+    const firebaseConfig = {
+      apiKey: "SUA_API_KEY",
+      authDomain: "SEU_DOMINIO.firebaseapp.com",
+      projectId: "SEU_PROJECT_ID",
+      storageBucket: "SEU_BUCKET.appspot.com",
+      messagingSenderId: "ID",
+      appId: "ID"
+    };
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    let questions = [
+      { q: "Qual criatura é associada ao Halloween?", options: ["Coelho", "Fantasma", "Sapo"], answer: 1 },
+      { q: "Qual cor representa o Halloween?", options: ["Laranja", "Azul", "Rosa"], answer: 0 }
+    ];
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyCh5arCVwjcDWKM6GZd5pAmhjlozRhCg1w",
-    authDomain: "jogos-de-halloween.firebaseapp.com",
-    projectId: "jogos-de-halloween",
-    storageBucket: "jogos-de-halloween.appspot.com",
-    messagingSenderId: "431194437451",
-    appId: "1:431194437451:web:c55bef0f224d37ad135ace",
-    measurementId: "G-WMWMPG8EX"
-  };
+    let currentQuestion = 0;
+    let score = 0;
+    let startTime, endTime, nickname;
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+    function startGame() {
+      nickname = document.getElementById("nickname").value.trim();
+      if (!nickname) { alert("Digite seu nick!"); return; }
 
-  const loginDiv = document.getElementById("login");
-  const gameDiv = document.getElementById("game");
-  const countdownDiv = document.getElementById("countdown");
-  const adminDiv = document.getElementById("admin");
-  const finalModal = document.getElementById("finalModal");
-  const finalInfo = document.getElementById("finalInfo");
+      document.getElementById("start").style.display = "none";
 
-  let nickname = "";
-  let score = 0;
-  let timeLeft = 30;
-  let timer;
-  let totalTime = 0;
-  let startTime;
-  let currentIndex = 0;
-
-  const personagens = [
-    {nome: "chuck", img: "https://i.imgur.com/6XKMp7Y.png"},
-    {nome: "dracula", img: "https://i.imgur.com/aeRFyCr.png"},
-    {nome: "freddy krueger", img: "https://i.imgur.com/RyQgov7.png"},
-    {nome: "pennywise", img: "https://i.imgur.com/MdF3VWu.png"},
-    {nome: "frankenstein", img: "https://i.imgur.com/1TpY4md.png"},
-    {nome: "jason", img: "https://i.imgur.com/UPotXXO.png"},
-    {nome: "lobisomem", img: "https://i.imgur.com/kB6ydUP.png"},
-    {nome: "annabelle", img: "https://i.imgur.com/gHdIHHd.png"},
-    {nome: "michael myers", img: "https://i.imgur.com/7feqzEE.png"},
-    {nome: "jack skellington", img: "https://i.imgur.com/lxdb9oT.png"}
-  ];
-
-  window.onload = () => { loginDiv.style.display = "block"; };
-
-  async function login(){
-    nickname = document.getElementById("nickname").value.trim().toLowerCase();
-    if(!nickname){ document.getElementById("login-msg").innerText="Digite um nick!"; return; }
-
-    if(nickname === "admin123"){
-      const senha = prompt("Digite a senha do admin:");
-      if(senha === "123456"){ loginDiv.style.display="none"; adminDiv.style.display="block"; loadResults(); }
-      else { alert("Senha incorreta!"); }
-      return;
+      startCountdown(() => {
+        document.getElementById("quiz").style.display = "block";
+        startTime = new Date();
+        showQuestion();
+      });
     }
 
-    const snapshot = await getDocs(collection(db, "resultados"));
-    let used = false;
-    snapshot.forEach(doc => { if(doc.data().nick===nickname){ used=true; } });
-    if(used){
-      document.getElementById("login-msg").innerText="Só é permitido jogar apenas uma vez!";
-      return;
+    function startCountdown(callback) {
+      let countdown = 5;
+      const countdownDiv = document.createElement("div");
+      countdownDiv.id = "countdownDiv";
+      document.body.style.backgroundColor = "black"; 
+      document.body.appendChild(countdownDiv);
+
+      const interval = setInterval(() => {
+        countdownDiv.textContent = countdown;
+        countdown--;
+
+        if (countdown < 0) {
+          clearInterval(interval);
+          document.body.removeChild(countdownDiv);
+          document.body.style.backgroundColor = ""; // volta ao normal
+          callback();
+        }
+      }, 1000);
     }
 
-    loginDiv.style.display="none";
-    startCountdown();
-  }
-
-  function startCountdown(){
-    let count=5;
-    countdownDiv.style.display="flex";
-    const interval = setInterval(()=>{
-      countdownDiv.innerText = count>0?count:"Valendo!";
-      count--;
-      if(count<0){
-        clearInterval(interval);
-        countdownDiv.style.display="none";
-        startGame();
+    function showQuestion() {
+      if (currentQuestion >= questions.length) {
+        endGame();
+        return;
       }
-    },1000);
-  }
 
-  function startGame(){
-    gameDiv.style.display="block";
-    startTime = new Date();
-    score = 0;
-    currentIndex = 0;
-    showCharacter();
-    startTimer();
-  }
+      const q = questions[currentQuestion];
+      const quizDiv = document.getElementById("quiz");
+      quizDiv.innerHTML = `<div class="question">${q.q}</div>`;
+      q.options.forEach((opt, i) => {
+        const btn = document.createElement("button");
+        btn.textContent = opt;
+        btn.onclick = () => checkAnswer(i);
+        quizDiv.appendChild(btn);
+      });
+    }
 
-  function showCharacter(){
-    if(currentIndex>=personagens.length){ endGame(); return; }
-    timeLeft=30;
-    document.getElementById("quiz-image").src=personagens[currentIndex].img;
-    document.getElementById("answer").value="";
-  }
+    function checkAnswer(choice) {
+      const soundCorrect = document.getElementById("soundCorrect");
+      const soundWrong = document.getElementById("soundWrong");
 
-  function startTimer(){
-    timer = setInterval(()=>{
-      timeLeft--;
-      totalTime = Math.floor((new Date()-startTime)/1000);
-      document.getElementById("timer").innerText=timeLeft;
-      if(timeLeft<=0){
-        currentIndex++;
-        if(currentIndex<personagens.length){ showCharacter(); }
-        else { endGame(); }
+      if (choice === questions[currentQuestion].answer) {
+        score++;
+        soundCorrect.play();
+      } else {
+        soundWrong.play();
       }
-    },1000);
-  }
-
-  function checkAnswer(){
-    const ans=document.getElementById("answer").value.trim().toLowerCase();
-    const correct=personagens[currentIndex].nome;
-    if(ans===correct){
-      score+=10;
-      document.getElementById("score").innerText="Score: "+score;
-      document.getElementById("sound-correct").play();
-      currentIndex++;
-      if(currentIndex<personagens.length){ showCharacter(); }
-      else { endGame(); }
-    } else {
-      document.getElementById("answer").classList.add("error");
-      document.getElementById("sound-wrong").play();
-      setTimeout(()=>{ document.getElementById("answer").classList.remove("error"); },1000);
+      currentQuestion++;
+      showQuestion();
     }
-  }
 
-  function endGame(){
-    clearInterval(timer);
-    gameDiv.style.display="none";
-    const now=new Date();
-    const datetime=now.toLocaleString("pt-BR");
-    finalInfo.innerHTML=`Nick: ${nickname}<br>Pontos: ${score}<br>Tempo: ${totalTime}s<br>Data/Hora: ${datetime}`;
-    finalModal.style.display="flex";
-  }
+    function endGame() {
+      endTime = new Date();
+      const timeTaken = Math.floor((endTime - startTime) / 1000);
 
-  async function saveResult(){
-    const now=new Date();
-    const datetime=now.toLocaleString("pt-BR");
-    await addDoc(collection(db,"resultados"),{nick:nickname,pontos:score,tempo:totalTime,data:datetime});
-    alert("Resultado salvo com sucesso!");
-    finalModal.style.display="none";
-  }
+      const resultsDiv = document.getElementById("results");
+      resultsDiv.style.display = "block";
+      document.getElementById("quiz").style.display = "none";
 
-  async function loadResults(){
-    const tbody=document.querySelector("#results-table tbody");
-    tbody.innerHTML="";
-    const snapshot=await getDocs(collection(db,"resultados"));
-    let i=1;
-    snapshot.forEach(d=>{
-      const data=d.data();
-      const row=document.createElement("tr");
-      row.innerHTML=`<td>${i}</td><td>${data.nick}</td><td>${data.pontos}</td><td>${data.tempo}</td><td>${data.data}</td>
-      <td>
-        <button onclick="deleteResult('${d.id}')">Deletar</button>
-        <button onclick="editResult('${d.id}')">Editar</button>
-      </td>`;
-      tbody.appendChild(row);
-      i++;
-    });
-  }
+      const now = new Date();
+      const formattedDate = now.toLocaleString();
 
-  async function deleteResult(id){ await deleteDoc(doc(db,"resultados",id)); loadResults(); }
-  async function editResult(id){
-    const newScore=prompt("Novo score:");
-    if(newScore){
-      await updateDoc(doc(db,"resultados",id),{pontos:parseInt(newScore)});
-      loadResults();
+      resultsDiv.innerHTML = `
+        <h2>Resultado Final</h2>
+        <p>Nick: ${nickname}</p>
+        <p>Pontuação: ${score}</p>
+        <p>Tempo: ${timeTaken} segundos</p>
+        <p>Data/Hora: ${formattedDate}</p>
+        <button onclick="saveResult('${nickname}', ${score}, ${timeTaken}, '${formattedDate}')">Salvar Resultado</button>
+      `;
     }
-  }
-  async function reboot(){
-    const snapshot=await getDocs(collection(db,"resultados"));
-    snapshot.forEach(async d=>{ await deleteDoc(doc(db,"resultados",d.id)); });
-    loadResults();
-  }
 
-  async function showPodio(){
-    const snapshot=await getDocs(collection(db,"resultados"));
-    let data=[];
-    snapshot.forEach(d=>data.push(d.data()));
-    data.sort((a,b)=>b.pontos-a.pontos || a.tempo-b.tempo);
-    let podioHtml="<h2>Pódio</h2><table>";
-    data.slice(0,3).forEach((u,i)=>{
-      let cls=i===0?"gold":i===1?"silver":"bronze";
-      podioHtml+=`<tr class="${cls}"><td>${i+1}</td><td>${u.nick}</td><td>${u.pontos}</td><td>${u.tempo}s</td><td>${u.data}</td></tr>`;
-    });
-    podioHtml+="</table>";
-    document.getElementById("podio").innerHTML=podioHtml;
-  }
+    async function saveResult(nick, pontos, tempo, dataHora) {
+      await db.collection("resultados").add({
+        nick, pontos, tempo, dataHora
+      });
+      alert("Resultado salvo com sucesso!");
+    }
 
-  window.login=login;
-  window.checkAnswer=checkAnswer;
-  window.saveResult=saveResult;
-  window.deleteResult=deleteResult;
-  window.editResult=editResult;
-  window.reboot=reboot;
-  window.showPodio=showPodio;
-</script>
+    // Exemplo admin (simulação: só aparece se nick == "admin")
+    window.onload = async () => {
+      if (nickname === "admin") {
+        document.getElementById("adminPanel").style.display = "block";
+      }
+    };
+  </script>
 </body>
 </html>

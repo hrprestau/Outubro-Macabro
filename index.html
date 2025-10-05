@@ -1,492 +1,609 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Outubro Macabro: Quiz dos personagens</title>
-  <style>
-    :root{--bg1:#2b0b3a;--bg2:#4b1060;--accent:#ff7a00}
-    *{box-sizing:border-box}
-    body{margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;min-height:100vh;display:flex;align-items:stretch;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:#fff}
-    .container{width:100%;max-width:1100px;margin:40px auto;padding:20px}
-    header{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:18px;text-align:center}
-    h1{font-size:28px;margin:0;color:var(--accent)}
-    h2{margin:0;font-size:18px;opacity:0.95}
-    .card{background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));border-radius:12px;padding:20px;box-shadow:0 6px 20px rgba(0,0,0,0.4)}
-    #loginView{max-width:600px;margin:0 auto}
-    label{display:block;margin-bottom:8px;font-weight:600}
-    input[type=text], input[type=password]{width:100%;padding:12px;border-radius:8px;border:2px solid rgba(255,255,255,0.08);background:transparent;color:#fff;font-size:16px}
-    .btn{display:inline-block;padding:10px 16px;border-radius:8px;background:var(--accent);color:#1a0b00;font-weight:700;border:none;cursor:pointer}
-    .muted{opacity:0.85}
-    #gameView{display:none}
-    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-    .timer{font-weight:800;font-size:36px;background:rgba(0,0,0,0.25);padding:8px 12px;border-radius:10px}
-    .score{font-size:18px}
-    .stage{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:8px}
-    .characterCard{width:360px;height:360px;border-radius:12px;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,0.6)}
-    .characterCard img{max-width:100%;max-height:100%;object-fit:contain}
-    .answerBox{margin-top:14px;display:flex;gap:10px;align-items:center}
-    .answerBox input{flex:1;padding:12px;border-radius:10px;border:2px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);color:#fff;font-size:16px}
-    .answerBox input.wrong{border-color:#ff4b4b;background:rgba(255,75,75,0.06);animation:shake .3s}
-    @keyframes shake{0%{transform:translateX(-3px)}50%{transform:translateX(3px)}100%{transform:translateX(0)}}
-    .countdownBig{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-size:96px;font-weight:900;color:var(--accent);pointer-events:none}
-    .smallNote{font-size:12px;opacity:0.9}
-    #resultsView{display:none}
-    .podium{display:flex;gap:12px;align-items:end;justify-content:center;margin:20px 0}
-    .podium .place{width:160px;text-align:center;padding:14px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));}
-    .first{height:180px;background:linear-gradient(180deg,#ffe3bf, #ffd59a);color:#331900}
-    .second{height:140px;background:linear-gradient(180deg,#e6e6ff,#cfcfff);color:#0b0033}
-    .third{height:120px;background:linear-gradient(180deg,#ffd6e6,#ffcce0);color:#3b0019}
-    .listings{margin-top:12px}
-    table{width:100%;border-collapse:collapse}
-    th,td{padding:8px;border-bottom:1px dashed rgba(255,255,255,0.03);text-align:left}
-    footer{margin-top:26px;text-align:center;opacity:0.85}
-    .admin-panel{margin-top:12px}
-    .admin-actions{display:flex;gap:8px;flex-wrap:wrap}
-    @media (max-width:700px){.characterCard{width:90vw;height:60vw}.timer{font-size:28px}.countdownBig{font-size:64px}}
-  </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Outubro Macabro: Quiz dos personagens</title>
+  <style>
+    :root{--bg1:#2b0b3a;--bg2:#4b1060;--accent:#ff7a00;--gold-light:#ffdb99;--gold-dark:#e6b800;--silver-light:#e6e6ff;--silver-dark:#a8a8c4;--bronze-light:#ffd6e6;--bronze-dark:#a85a73}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;min-height:100vh;display:flex;align-items:stretch;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:#fff;transition:filter 0.4s ease-out}
+    .blur-active{filter:blur(6px) !important} /* Novo: Classe para o efeito blur */
+    .container{width:100%;max-width:1100px;margin:40px auto;padding:20px}
+    header{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:18px;text-align:center}
+    h1{font-size:28px;margin:0;color:var(--accent)}
+    h2{margin:0;font-size:18px;opacity:0.95}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));border-radius:12px;padding:20px;box-shadow:0 6px 20px rgba(0,0,0,0.4)}
+    #loginView{max-width:600px;margin:0 auto}
+    label{display:block;margin-bottom:8px;font-weight:600}
+    input[type=text], input[type=password]{width:100%;padding:12px;border-radius:8px;border:2px solid rgba(255,255,255,0.08);background:transparent;color:#fff;font-size:16px}
+    .btn{display:inline-block;padding:10px 16px;border-radius:8px;background:var(--accent);color:#1a0b00;font-weight:700;border:none;cursor:pointer}
+    .muted{opacity:0.85}
+    #gameView{display:none}
+    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .timer{font-weight:800;font-size:36px;background:rgba(0,0,0,0.25);padding:8px 12px;border-radius:10px}
+    .score{font-size:18px}
+    .stage{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:8px}
+    .characterCard{width:360px;height:360px;border-radius:12px;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,0.6)}
+    .characterCard img{max-width:100%;max-height:100%;object-fit:contain}
+    .answerBox{margin-top:14px;display:flex;gap:10px;align-items:center}
+    .answerBox input{flex:1;padding:12px;border-radius:10px;border:2px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);color:#fff;font-size:16px}
+    .answerBox input.wrong{border-color:#ff4b4b;background:rgba(255,75,75,0.06);animation:shake .3s}
+    @keyframes shake{0%{transform:translateX(-3px)}50%{transform:translateX(3px)}100%{transform:translateX(0)}}
+    .countdownBig{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-size:96px;font-weight:900;color:var(--accent);pointer-events:none;z-index:100}
+    .smallNote{font-size:12px;opacity:0.9}
+    #resultsView{display:none}
+    .podium{display:flex;gap:12px;align-items:end;justify-content:center;margin:20px 0}
+    .podium .place{width:160px;text-align:center;padding:14px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));box-shadow: 0 4px 10px rgba(0,0,0,0.2)}
+    /* Cores do Pódio Ajustadas */
+    .first{height:180px;background:linear-gradient(180deg,var(--gold-light), var(--gold-dark));color:#331900}
+    .second{height:140px;background:linear-gradient(180deg,var(--silver-light),var(--silver-dark));color:#0b0033}
+    .third{height:120px;background:linear-gradient(180deg,var(--bronze-light),var(--bronze-dark));color:#3b0019}
+    .listings{margin-top:12px}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px;border-bottom:1px dashed rgba(255,255,255,0.03);text-align:left}
+    footer{margin-top:26px;text-align:center;opacity:0.85}
+    .admin-panel{margin-top:12px}
+    .admin-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+    /* Novo: Estilo do Modal/Janela de Resultado */
+    #endGameModal{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:none;align-items:center;justify-content:center;z-index:200}
+    #endGameModalContent{background:var(--bg2);padding:30px;border-radius:15px;max-width:400px;width:90%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.8)}
+    #endGameModalContent h3{color:var(--accent);margin-top:0}
+    #saveResultBtn{margin-top:20px;width:100%}
+    #modalData p{margin:8px 0;font-size:18px}
+    #modalData strong{color:var(--accent)}
+
+    @media (max-width:700px){.characterCard{width:90vw;height:60vw}.timer{font-size:28px}.countdownBig{font-size:64px}}
+  </style>
 </head>
-<body>
-  <div class="container">
-    <header>
-      <h1>Outubro Macabro: 31 Dias de Mistério e Sabor</h1>
-      <h2>Quiz dos personagens</h2>
-    </header>
+<body id="quizBody">
+  <div class="container">
+    <header>
+      <h1>Outubro Macabro: 31 Dias de Mistério e Sabor</h1>
+      <h2>Quiz dos personagens</h2>
+    </header>
 
-    <!-- LOGIN -->
-    <div id="loginView" class="card">
-      <p class="muted">Escolha um nick para jogar. Cada nick só pode jogar uma vez.</p>
-      <label for="nickInput">Nick</label>
-      <input type="text" id="nickInput" placeholder="Seu apelido..." autocomplete="off" />
-      <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
-        <button id="startBtn" class="btn">Iniciar Quiz</button>
-        <button id="viewResultsBtn" class="btn" style="background:#6b2b8a;color:#fff">Ver Pódio</button>
-      </div>
-      <p id="loginMsg" style="margin-top:12px;color:#ffcccb;display:none;font-weight:700"></p>
-    </div>
+        <div id="loginView" class="card">
+      <p class="muted">Escolha um nick para jogar. Cada nick só pode jogar uma vez.</p>
+      <label for="nickInput">Nick</label>
+      <input type="text" id="nickInput" placeholder="Seu apelido..." autocomplete="off" />
+      <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
+        <button id="startBtn" class="btn">Iniciar Quiz</button>
+        <button id="viewResultsBtn" class="btn" style="background:#6b2b8a;color:#fff">Ver Pódio</button>
+      </div>
+      <p id="loginMsg" style="margin-top:12px;color:#ffcccb;display:none;font-weight:700"></p>
+    </div>
 
-    <!-- GAME -->
-    <div id="gameView" class="card">
-      <div class="topbar">
-        <div class="timer" id="questionTimer">30</div>
-        <div class="score">Nick: <span id="nickBadge"></span> &nbsp;|&nbsp; Pontos: <strong id="score">0</strong></div>
-      </div>
+        <div id="gameView" class="card">
+      <div class="topbar">
+        <div class="timer" id="questionTimer">30</div>
+        <div class="score">Nick: <span id="nickBadge"></span> &nbsp;|&nbsp; Pontos: <strong id="score">0</strong></div>
+      </div>
 
-      <div class="stage">
-        <div class="characterCard" id="charCard"><img id="charImg" src="" alt="personagem"/></div>
-        <div class="answerBox">
-          <input id="answerInput" type="text" placeholder="Quem é esse personagem?" autocomplete="off" />
-          <button id="submitAnswer" class="btn">Responder</button>
-        </div>
-        <div class="smallNote">Você tem <strong>30s</strong> por personagem. Acerta = +10 pontos.</div>
-      </div>
-    </div>
+      <div class="stage">
+        <div class="characterCard" id="charCard"><img id="charImg" src="" alt="personagem"/></div>
+        <div class="answerBox">
+          <input id="answerInput" type="text" placeholder="Quem é esse personagem?" autocomplete="off" />
+          <button id="submitAnswer" class="btn">Responder</button>
+        </div>
+        <div class="smallNote">Você tem <strong>30s</strong> por personagem. Acerta = +10 pontos.</div>
+      </div>
+    </div>
 
-    <!-- RESULTS -->
-    <div id="resultsView" class="card">
-      <div id="userResultBox" style="margin-bottom:12px;padding:12px;border-radius:8px;background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));display:none"></div>
+        <div id="resultsView" class="card">
+      <div id="userResultBox" style="margin-bottom:12px;padding:12px;border-radius:8px;background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));display:none"></div>
 
-      <h3 style="margin-top:6px">Pódio</h3>
-      <div class="podium" id="podiumContainer"></div>
+      <h3 style="margin-top:6px">Pódio</h3>
+      <div class="podium" id="podiumContainer"></div>
 
-      <h3>Todos os envios (ordem de envio)</h3>
-      <div class="listings">
-        <table><thead><tr><th>#</th><th>Nick</th><th>Pontos</th><th>Tempo (s)</th><th>Data / Hora</th><th>Ações</th></tr></thead><tbody id="allSubmissions"></tbody></table>
-      </div>
+      <h3>Todos os envios (ordem de envio)</h3>
+      <div class="listings">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nick</th>
+              <th>Pontos</th>
+              <th>Tempo (s)</th>
+              <th>Data / Hora</th>
+              <th id="adminActionsHeader" style="display:none">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="allSubmissions"></tbody>
+        </table>
+      </div>
 
-      <div id="adminArea" style="display:none" class="admin-panel card">
-        <h3>Admin - Painel</h3>
-        <div class="admin-actions" style="margin-bottom:10px">
-          <button id="adminReboot" class="btn" style="background:#b31b1b">Reboot (Apagar todos)</button>
-          <button id="adminViewPodium" class="btn" style="background:#6b2b8a">Ver Pódio</button>
-        </div>
-        <div style="font-size:13px;opacity:0.9">Ações administrativas: deletar, editar cada envio. Use com cuidado.</div>
-      </div>
-    </div>
+      <div id="adminArea" style="display:none" class="admin-panel card">
+        <h3>Admin - Painel</h3>
+        <div class="admin-actions" style="margin-bottom:10px">
+          <button id="adminReboot" class="btn" style="background:#b31b1b">Reboot (Apagar todos)</button>
+          <button id="adminViewPodium" class="btn" style="background:#6b2b8a">Ver Pódio</button>
+        </div>
+        <div style="font-size:13px;opacity:0.9">Ações administrativas: deletar, editar cada envio. Use com cuidado.</div>
+      </div>
+    </div>
 
-    <footer>Feito por: luis</footer>
-  </div>
+    <footer>Feito por: luis</footer>
+  </div>
 
-  <div id="countdownBig" class="countdownBig" style="display:none"></div>
+  <div id="countdownBig" class="countdownBig" style="display:none"></div>
 
-  <audio id="negativeSound"></audio>
-  <audio id="positiveSound"></audio>
+  <audio id="negativeSound"></audio>
+  <audio id="positiveSound"></audio>
 
-  <!-- Firebase SDK (modular) -->
-  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
-    import { getFirestore, collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, updateDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+    <div id="endGameModal">
+    <div id="endGameModalContent">
+      <h3>Quiz Finalizado!</h3>
+      <div id="modalData">
+              </div>
+      <p id="saveMessage" style="color:#ffcc00; font-weight:600; display:none;">Salvando resultado...</p>
+      <button id="saveResultBtn" class="btn">Salvar Resultado</button>
+      <button id="closeModalBtn" class="btn" style="background:#6b2b8a;color:#fff;margin-top:10px;">Ver Pódio</button>
+    </div>
+  </div>
 
-    // --- Firebase config (da sua imagem) ---
-    const firebaseConfig = {
-      apiKey: "AIzaSyCh5arCVwjcDWKM6GZd5pAmhjlozRhCg1w",
-      authDomain: "jogos-de-halloween.firebaseapp.com",
-      projectId: "jogos-de-halloween",
-      storageBucket: "jogos-de-halloween.appspot.com",
-      messagingSenderId: "431194437451",
-      appId: "1:431194437451:web:c55bef0f224d37ad135ace",
-      measurementId: "G-WMW0MPG8EX"
-    };
+    <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
+    import { getFirestore, collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, updateDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    // --- Firebase config (da sua imagem) ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyCh5arCVwjcDWKM6GZd5pAmhjlozRhCg1w",
+      authDomain: "jogos-de-halloween.firebaseapp.com",
+      projectId: "jogos-de-halloween",
+      storageBucket: "jogos-de-halloween.appspot.com",
+      messagingSenderId: "431194437451",
+      appId: "1:431194437451:web:c55bef0f224d37ad135ace",
+      measurementId: "G-WMW0MPG8EX"
+    };
 
-    // --- Characters ---
-    const characters = [
-      {name:'chuck', url:'https://i.imgur.com/6XKMp7Y.png'},
-      {name:'Drácula', url:'https://i.imgur.com/aeRFyCr.png'},
-      {name:'Freddy Krueger', url:'https://i.imgur.com/RyQgov7.png'},
-      {name:'Pennywise', url:'https://i.imgur.com/MdF3VWu.png'},
-      {name:'Frankenstein', url:'https://i.imgur.com/1TpY4md.png'},
-      {name:'Jason', url:'https://i.imgur.com/UPotXXO.png'},
-      {name:'Lobisomem', url:'https://i.imgur.com/kB6ydUP.png'},
-      {name:'Annabelle', url:'https://i.imgur.com/gHdIHHd.png'},
-      {name:'Michael Myers', url:'https://i.imgur.com/7feqzEE.png'},
-      {name:'Jack Skellington', url:'https://i.imgur.com/lxdb9oT.png'}
-    ];
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-    // DOM
-    const loginView = document.getElementById('loginView');
-    const gameView = document.getElementById('gameView');
-    const resultsView = document.getElementById('resultsView');
-    const nickInput = document.getElementById('nickInput');
-    const startBtn = document.getElementById('startBtn');
-    const viewResultsBtn = document.getElementById('viewResultsBtn');
-    const loginMsg = document.getElementById('loginMsg');
-    const nickBadge = document.getElementById('nickBadge');
+    // --- Characters ---
+    const characters = [
+      {name:'chuck', url:'https://i.imgur.com/6XKMp7Y.png'},
+      {name:'Drácula', url:'https://i.imgur.com/aeRFyCr.png'},
+      {name:'Freddy Krueger', url:'https://i.imgur.com/RyQgov7.png'},
+      {name:'Pennywise', url:'https://i.imgur.com/MdF3VWu.png'},
+      {name:'Frankenstein', url:'https://i.imgur.com/1TpY4md.png'},
+      {name:'Jason', url:'https://i.imgur.com/UPotXXO.png'},
+      {name:'Lobisomem', url:'https://i.imgur.com/kB6ydUP.png'},
+      {name:'Annabelle', url:'https://i.imgur.com/gHdIHHd.png'},
+      {name:'Michael Myers', url:'https://i.imgur.com/7feqzEE.png'},
+      {name:'Jack Skellington', url:'https://i.imgur.com/lxdb9oT.png'}
+    ];
 
-    const charImg = document.getElementById('charImg');
-    const questionTimerEl = document.getElementById('questionTimer');
-    const answerInput = document.getElementById('answerInput');
-    const submitAnswer = document.getElementById('submitAnswer');
-    const scoreEl = document.getElementById('score');
+    // DOM
+    const quizBody = document.getElementById('quizBody');
+    const loginView = document.getElementById('loginView');
+    const gameView = document.getElementById('gameView');
+    const resultsView = document.getElementById('resultsView');
+    const nickInput = document.getElementById('nickInput');
+    const startBtn = document.getElementById('startBtn');
+    const viewResultsBtn = document.getElementById('viewResultsBtn');
+    const loginMsg = document.getElementById('loginMsg');
+    const nickBadge = document.getElementById('nickBadge');
 
-    const countdownBig = document.getElementById('countdownBig');
-    const negativeSoundEl = document.getElementById('negativeSound');
-    const positiveSoundEl = document.getElementById('positiveSound');
+    const charImg = document.getElementById('charImg');
+    const questionTimerEl = document.getElementById('questionTimer');
+    const answerInput = document.getElementById('answerInput');
+    const submitAnswer = document.getElementById('submitAnswer');
+    const scoreEl = document.getElementById('score');
 
-    const podiumContainer = document.getElementById('podiumContainer');
-    const allSubmissionsTbody = document.getElementById('allSubmissions');
-    const userResultBox = document.getElementById('userResultBox');
-    const adminArea = document.getElementById('adminArea');
-    const adminRebootBtn = document.getElementById('adminReboot');
-    const adminViewPodiumBtn = document.getElementById('adminViewPodium');
+    const countdownBig = document.getElementById('countdownBig');
+    const negativeSoundEl = document.getElementById('negativeSound');
+    const positiveSoundEl = document.getElementById('positiveSound');
 
-    // State
-    let shuffled = [];
-    let currentIndex = 0;
-    let perQuestionTimer = null;
-    let perQuestionRemaining = 30;
-    let score = 0;
-    let currentUser = null;
-    let gameStartTs = null;
-    let gameEndTs = null;
+    const podiumContainer = document.getElementById('podiumContainer');
+    const allSubmissionsTbody = document.getElementById('allSubmissions');
+    const userResultBox = document.getElementById('userResultBox');
+    const adminArea = document.getElementById('adminArea');
+    const adminRebootBtn = document.getElementById('adminReboot');
+    const adminViewPodiumBtn = document.getElementById('adminViewPodium');
+    const adminActionsHeader = document.getElementById('adminActionsHeader'); // Novo
 
-    const SUBMISSIONS_COLLECTION = 'submissions';
+    // Novo: Modal
+    const endGameModal = document.getElementById('endGameModal');
+    const modalData = document.getElementById('modalData');
+    const saveResultBtn = document.getElementById('saveResultBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const saveMessage = document.getElementById('saveMessage');
 
-    // small beep fallback
-    function mkBeep(freq, dur){
-      try{
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const o = ctx.createOscillator(); const g = ctx.createGain();
-        o.type='sine'; o.frequency.value=freq; g.gain.value=0.05;
-        o.connect(g); g.connect(ctx.destination);
-        o.start(); o.stop(ctx.currentTime + dur/1000);
-        return;
-      }catch(e){}
-    }
 
-    function normalizeAnswer(s){ if(!s) return ''; return s.toLowerCase().trim().normalize('NFD').replace(/\p{Diacritic}/gu, ''); }
-    function escapeHtml(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;') }
-    function formatDateTime(d){ return d.toLocaleString('pt-BR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}) }
+    // State
+    let shuffled = [];
+    let currentIndex = 0;
+    let perQuestionTimer = null;
+    let perQuestionRemaining = 30;
+    let score = 0;
+    let currentUser = null;
+    let gameStartTs = null;
+    let gameEndTs = null;
+    let finalSubmissionData = null; // Novo: Para armazenar o resultado final antes de salvar
 
-    // Firebase helpers
-    async function nickExistsInDb(nick){
-      // simple case-insensitive check (fetch all and compare)
-      try{
-        const q = query(collection(db, SUBMISSIONS_COLLECTION), orderBy('timestamp','asc'));
-        const snap = await getDocs(q);
-        const lower = nick.toLowerCase();
-        for(const d of snap.docs){ if(String(d.data().nick).toLowerCase()===lower) return true; }
-      }catch(e){ console.warn('nickExistsInDb err', e); }
-      return false;
-    }
+    const SUBMISSIONS_COLLECTION = 'submissions';
+    let isAdmin = false; // Novo
 
-    async function saveSubmissionToDb(sub){
-      try{ await addDoc(collection(db, SUBMISSIONS_COLLECTION), sub); return true; }catch(e){ console.error('save fail',e); return false; }
-    }
+    // small beep fallback
+    function mkBeep(freq, dur){
+      try{
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = ctx.createOscillator(); const g = ctx.createGain();
+        o.type='sine'; o.frequency.value=freq; g.gain.value=0.05;
+        o.connect(g); g.connect(ctx.destination);
+        o.start(); o.stop(ctx.currentTime + dur/1000);
+        return;
+      }catch(e){}
+    }
 
-    async function fetchAllSubmissions(){
-      try{
-        const q = query(collection(db, SUBMISSIONS_COLLECTION), orderBy('timestamp','asc'));
-        const snap = await getDocs(q);
-        return snap.docs.map(d=>({ id:d.id, ...d.data() }));
-      }catch(e){ console.warn('fetchAllSubmissions err', e); return []; }
-    }
+    function normalizeAnswer(s){ if(!s) return ''; return s.toLowerCase().trim().normalize('NFD').replace(/\p{Diacritic}/gu, ''); }
+    function escapeHtml(s){ return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;') }
+    function formatDateTime(d){ return d.toLocaleString('pt-BR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}) }
+    // Novo: Inclui milissegundos para desempate mais preciso (embora não apareça no front)
+    function formatDateTimeFull(d){ return d.toLocaleString('pt-BR',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',fractionalSecondDigits:3}) }
 
-    async function deleteSubmissionById(id){ if(!id) return; await deleteDoc(doc(db, SUBMISSIONS_COLLECTION, id)); }
-    async function updateSubmissionById(id, data){ if(!id) return; await updateDoc(doc(db, SUBMISSIONS_COLLECTION, id), data); }
+    // Firebase helpers
+    async function nickExistsInDb(nick){
+      // simple case-insensitive check (fetch all and compare)
+      try{
+        const q = query(collection(db, SUBMISSIONS_COLLECTION), orderBy('timestamp','asc'));
+        const snap = await getDocs(q);
+        const lower = nick.toLowerCase();
+        for(const d of snap.docs){ if(String(d.data().nick).toLowerCase()===lower) return true; }
+      }catch(e){ console.warn('nickExistsInDb err', e); }
+      return false;
+    }
 
-    // UI functions
-    function showView(v){ loginView.style.display='none'; gameView.style.display='none'; resultsView.style.display='none'; if(v==='login') loginView.style.display='block'; if(v==='game') gameView.style.display='block'; if(v==='results') resultsView.style.display='block'; }
-    function showLoginMessage(msg){ loginMsg.style.display='block'; loginMsg.textContent=msg }
-    function hideLoginMessage(){ loginMsg.style.display='none'; loginMsg.textContent='' }
+    async function saveSubmissionToDb(sub){
+      try{ await addDoc(collection(db, SUBMISSIONS_COLLECTION), sub); return true; }catch(e){ console.error('save fail',e); return false; }
+    }
 
-    startBtn.addEventListener('click', async ()=>{
-      const nick = nickInput.value.trim();
-      if(!nick){ showLoginMessage('Informe um nick válido.'); return; }
+    async function fetchAllSubmissions(){
+      try{
+        const q = query(collection(db, SUBMISSIONS_COLLECTION), orderBy('timestamp','asc'));
+        const snap = await getDocs(q);
+        return snap.docs.map(d=>({ id:d.id, ...d.data() }));
+      }catch(e){ console.warn('fetchAllSubmissions err', e); return []; }
+    }
 
-      // Admin shortcut
-      if(nick === 'admin123'){
-        const pass = prompt('Senha de admin:');
-        if(pass === '123456'){
-          adminArea.style.display='block';
-          renderAdminPanel();
-          showView('results');
-        } else {
-          showLoginMessage('Senha de admin incorreta.');
-        }
-        return;
-      }
+    async function deleteSubmissionById(id){ if(!id) return; await deleteDoc(doc(db, SUBMISSIONS_COLLECTION, id)); }
+    async function updateSubmissionById(id, data){ if(!id) return; await updateDoc(doc(db, SUBMISSIONS_COLLECTION, id), data); }
 
-      // check DB for existing nick
-      let exists = false;
-      try{ exists = await nickExistsInDb(nick); }catch(e){ console.warn('Erro ao checar nick', e); }
+    // UI functions
+    function showView(v){ loginView.style.display='none'; gameView.style.display='none'; resultsView.style.display='none'; if(v==='login') loginView.style.display='block'; if(v==='game') gameView.style.display='block'; if(v==='results') resultsView.style.display='block'; }
+    function showLoginMessage(msg){ loginMsg.style.display='block'; loginMsg.textContent=msg }
+    function hideLoginMessage(){ loginMsg.style.display='none'; loginMsg.textContent='' }
 
-      if(exists){
-        showLoginMessage('Só é permitido jogar apenas uma Vez!');
-        const viewBtn = document.createElement('button'); viewBtn.className='btn'; viewBtn.style.background='#6b2b8a'; viewBtn.textContent='Ver Resultado!';
-        viewBtn.onclick = ()=>{ renderResultsForNick(nick); showView('results'); };
-        const existing = document.getElementById('viewResultInline'); if(existing) existing.remove(); viewBtn.id='viewResultInline'; loginView.appendChild(viewBtn);
-        return;
-      }
+    startBtn.addEventListener('click', async ()=>{
+      const nick = nickInput.value.trim();
+      if(!nick){ showLoginMessage('Informe um nick válido.'); return; }
 
-      // everything ok -> start
-      currentUser = nick; nickBadge.textContent = currentUser; hideLoginMessage(); startCountdownBeforeGame();
-    });
+      // Admin shortcut
+      if(nick === 'admin123'){
+        const pass = prompt('Senha de admin:');
+        if(pass === '123456'){
+          isAdmin = true; // Define como admin
+          adminArea.style.display='block';
+          adminActionsHeader.style.display = 'table-cell'; // Mostra header de Ações
+          renderAdminPanel();
+          showView('results');
+        } else {
+          showLoginMessage('Senha de admin incorreta.');
+        }
+        return;
+      } else {
+        isAdmin = false; // Garante que não é admin
+        adminArea.style.display='none';
+        adminActionsHeader.style.display = 'none'; // Esconde header de Ações
+      }
 
-    viewResultsBtn.addEventListener('click', ()=>{ renderAllResults(); showView('results'); });
 
-    // countdown before game
-    function startCountdownBeforeGame(){ showView('game'); countdownBig.style.display='flex'; let n=5; countdownBig.textContent = n; const intr=setInterval(()=>{ n--; if(n>0) countdownBig.textContent = n; else if(n===0) countdownBig.textContent = 'Valendo!'; else { clearInterval(intr); countdownBig.style.display='none'; beginGame(); } },900); }
+      // check DB for existing nick
+      let exists = false;
+      try{ exists = await nickExistsInDb(nick); }catch(e){ console.warn('Erro ao checar nick', e); }
 
-    function beginGame(){
-      shuffled = [...characters];
-      for(let i=shuffled.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]] }
-      currentIndex=0; score=0; scoreEl.textContent=score; answerInput.value=''; gameStartTs = Date.now(); showQuestion(currentIndex); answerInput.focus();
-    }
+      if(exists){
+        showLoginMessage('Só é permitido jogar apenas uma Vez!');
+        const viewBtn = document.createElement('button'); viewBtn.className='btn'; viewBtn.style.background='#6b2b8a'; viewBtn.textContent='Ver Resultado!';
+        viewBtn.onclick = ()=>{ renderResultsForNick(nick); showView('results'); };
+        const existing = document.getElementById('viewResultInline'); if(existing) existing.remove(); viewBtn.id='viewResultInline'; loginView.appendChild(viewBtn);
+        return;
+      }
 
-    function showQuestion(idx){
-      if(idx>=shuffled.length){ finishGame(); return; }
-      const ch = shuffled[idx];
-      charImg.src = ch.url;
-      charImg.alt = ch.name;
-      perQuestionRemaining = 30;
-      questionTimerEl.textContent = perQuestionRemaining;
-      if(perQuestionTimer) clearInterval(perQuestionTimer);
-      perQuestionTimer = setInterval(()=>{
-        perQuestionRemaining--;
-        questionTimerEl.textContent = perQuestionRemaining;
-        if(perQuestionRemaining<=0){
-          clearInterval(perQuestionTimer);
-          // time up -> advance to next
-          currentIndex++;
-          setTimeout(()=>{ showQuestion(currentIndex); },400);
-        }
-      },1000);
-    }
+      // everything ok -> start
+      currentUser = nick; nickBadge.textContent = currentUser; hideLoginMessage(); startCountdownBeforeGame();
+    });
 
-    function markWrong(){ answerInput.classList.add('wrong'); try{ negativeSoundEl.currentTime=0; negativeSoundEl.play(); }catch(e){ mkBeep(150,120); } setTimeout(()=>answerInput.classList.remove('wrong'),700); }
-    function markCorrect(){ answerInput.classList.remove('wrong'); try{ positiveSoundEl.currentTime=0; positiveSoundEl.play(); }catch(e){ mkBeep(880,120); } }
+    viewResultsBtn.addEventListener('click', ()=>{ renderAllResults(); showView('results'); });
 
-    submitAnswer.addEventListener('click', handleSubmit);
-    answerInput && answerInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') handleSubmit(); });
+    // countdown before game
+    function startCountdownBeforeGame(){
+      showView('game');
+      quizBody.classList.add('blur-active'); // Adiciona blur
+      countdownBig.style.display='flex';
+      let n=5;
+      countdownBig.textContent = n;
+      const intr=setInterval(()=>{
+        n--;
+        if(n>0) countdownBig.textContent = n;
+        else if(n===0) countdownBig.textContent = 'Valendo!';
+        else {
+          clearInterval(intr);
+          countdownBig.style.display='none';
+          quizBody.classList.remove('blur-active'); // Remove blur
+          beginGame();
+        }
+      },900);
+    }
 
-    function handleSubmit(){
-      const ans = normalizeAnswer(answerInput.value);
-      const expected = normalizeAnswer(shuffled[currentIndex].name);
-      if(!ans){ answerInput.classList.add('wrong'); setTimeout(()=>answerInput.classList.remove('wrong'),600); return; }
-      if(ans === expected){
-        score += 10; scoreEl.textContent = score; markCorrect();
-        clearInterval(perQuestionTimer);
-        answerInput.value='';
-        currentIndex++;
-        setTimeout(()=>{ showQuestion(currentIndex); },500);
-      } else {
-        // wrong but allow more attempts until time ends
-        markWrong();
-        answerInput.value='';
-      }
-    }
+    function beginGame(){
+      shuffled = [...characters];
+      for(let i=shuffled.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]] }
+      currentIndex=0; score=0; scoreEl.textContent=score; answerInput.value=''; gameStartTs = Date.now(); showQuestion(currentIndex); answerInput.focus();
+    }
 
-    async function finishGame(){
-      gameEndTs = Date.now();
-      if(perQuestionTimer) clearInterval(perQuestionTimer);
-      const totalTimeSec = Math.round((gameEndTs - gameStartTs)/1000);
-      const submission = { nick: currentUser, score: score, timeSec: totalTimeSec, timestamp: Date.now() };
+    function showQuestion(idx){
+      if(idx>=shuffled.length){ finishGame(); return; }
+      const ch = shuffled[idx];
+      charImg.src = ch.url;
+      charImg.alt = ch.name;
+      perQuestionRemaining = 30;
+      questionTimerEl.textContent = perQuestionRemaining;
+      if(perQuestionTimer) clearInterval(perQuestionTimer);
+      perQuestionTimer = setInterval(()=>{
+        perQuestionRemaining--;
+        questionTimerEl.textContent = perQuestionRemaining;
+        if(perQuestionRemaining<=0){
+          clearInterval(perQuestionTimer);
+          // time up -> advance to next
+          currentIndex++;
+          setTimeout(()=>{ showQuestion(currentIndex); },400);
+        }
+      },1000);
+    }
 
-      let saved = false;
-      try{ saved = await saveSubmissionToDb(submission); }catch(e){ console.warn('save error', e); saved = false; }
+    function markWrong(){ answerInput.classList.add('wrong'); try{ negativeSoundEl.currentTime=0; negativeSoundEl.play(); }catch(e){ mkBeep(150,120); } setTimeout(()=>answerInput.classList.remove('wrong'),700); }
+    function markCorrect(){ answerInput.classList.remove('wrong'); try{ positiveSoundEl.currentTime=0; positiveSoundEl.play(); }catch(e){ mkBeep(880,120); } }
 
-      if(!saved){
-        const key = 'quiz_submissions_fallback';
-        const arr = JSON.parse(localStorage.getItem(key)||'[]');
-        arr.push(submission);
-        localStorage.setItem(key, JSON.stringify(arr));
-      }
+    submitAnswer.addEventListener('click', handleSubmit);
+    answerInput && answerInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') handleSubmit(); });
 
-      // mark nick locally also so even if DB later fails we have record
-      const playedKey = 'quiz_played_nicks_v1';
-      const played = JSON.parse(localStorage.getItem(playedKey)||'[]');
-      played.push(currentUser);
-      localStorage.setItem(playedKey, JSON.stringify(played));
+    function handleSubmit(){
+      const ans = normalizeAnswer(answerInput.value);
+      const expected = normalizeAnswer(shuffled[currentIndex].name);
+      if(!ans){ answerInput.classList.add('wrong'); setTimeout(()=>answerInput.classList.remove('wrong'),600); return; }
+      if(ans === expected){
+        score += 10; scoreEl.textContent = score; markCorrect();
+        clearInterval(perQuestionTimer);
+        answerInput.value='';
+        currentIndex++;
+        setTimeout(()=>{ showQuestion(currentIndex); },500);
+      } else {
+        // wrong but allow more attempts until time ends
+        markWrong();
+        answerInput.value='';
+      }
+    }
 
-      renderAllResults();
-      showView('results');
-    }
+    // Novo: Lógica de Fim de Jogo e Modal de Salvar
+    async function finishGame(){
+      gameEndTs = Date.now();
+      if(perQuestionTimer) clearInterval(perQuestionTimer);
+      const totalTimeSec = Math.round((gameEndTs - gameStartTs)/1000);
+      finalSubmissionData = { nick: currentUser, score: score, timeSec: totalTimeSec, timestamp: gameEndTs };
 
-    // Results & Admin
-    async function renderAllResults(){
-      let subs = [];
-      try{ subs = await fetchAllSubmissions(); }catch(e){ subs = []; }
+      // Exibir Modal de Fim de Jogo
+      const d = new Date(finalSubmissionData.timestamp);
+      modalData.innerHTML = `
+        <p>Seu Nick: <strong>${escapeHtml(finalSubmissionData.nick)}</strong></p>
+        <p>Pontuação: <strong>${finalSubmissionData.score}</strong></p>
+        <p>Tempo Total: <strong>${finalSubmissionData.timeSec} s</strong></p>
+        <p style="font-size:14px; opacity:0.8;">Envio: ${formatDateTimeFull(d)}</p>
+      `;
+      saveResultBtn.disabled = false;
+      saveMessage.style.display = 'none';
+      endGameModal.style.display = 'flex';
+    }
 
-      const fallback = JSON.parse(localStorage.getItem('quiz_submissions_fallback')||'[]');
-      subs = subs.concat(fallback.map(s=>({ id:null, ...s })));
+    // Novo: Event Listener para Salvar Resultado
+    saveResultBtn.addEventListener('click', async ()=>{
+      if(!finalSubmissionData || saveResultBtn.disabled) return;
 
-      // podium sort: score desc, timestamp asc
-      const podiumSorted = [...subs].sort((a,b)=>{
-        if(b.score !== a.score) return b.score - a.score;
-        return (a.timestamp||0) - (b.timestamp||0);
-      });
+      saveResultBtn.disabled = true;
+      saveMessage.textContent = 'Salvando resultado...';
+      saveMessage.style.display = 'block';
 
-      // render podium
-      podiumContainer.innerHTML = '';
-      const top3 = [podiumSorted[0]||null, podiumSorted[1]||null, podiumSorted[2]||null];
-      const order = [1,0,2];
-      order.forEach((pos)=>{
-        const data = top3[pos];
-        const placeDiv = document.createElement('div');
-        placeDiv.className = 'place ' + (pos===1? 'first' : (pos===0? 'second':'third'));
-        if(data){
-          const placeNum = pos===1? '1º' : (pos===0? '2º':'3º');
-          placeDiv.innerHTML = `<div style="font-size:14px;font-weight:800">${placeNum}</div><div style="margin-top:6px;font-weight:800">${escapeHtml(data.nick)}</div><div style="margin-top:6px;font-weight:700">${data.score} pts</div>`;
-        } else {
-          placeDiv.innerHTML = `<div style="font-size:14px;opacity:0.9">-</div>`;
-        }
-        podiumContainer.appendChild(placeDiv);
-      });
+      let saved = false;
+      try{
+        saved = await saveSubmissionToDb(finalSubmissionData);
+      }catch(e){
+        console.warn('save error', e);
+      }
 
-      // list all submissions by chronological order
-      allSubmissionsTbody.innerHTML = '';
-      const byOrder = [...subs].sort((a,b)=>(a.timestamp||0) - (b.timestamp||0));
-      byOrder.forEach((s, idx)=>{
-        const tr = document.createElement('tr');
-        const d = new Date(s.timestamp||Date.now());
-        tr.innerHTML = `<td>${idx+1}</td><td>${escapeHtml(s.nick)}</td><td>${s.score}</td><td>${s.timeSec}</td><td>${formatDateTime(d)}</td><td></td>`;
-        const actionsTd = tr.querySelector('td:last-child');
+      if(saved){
+        saveMessage.textContent = 'Resultado salvo com sucesso!';
+        saveMessage.style.color = '#7bff7b';
+        // marca localmente para evitar que jogue de novo (mesmo se DB falhar)
+        const playedKey = 'quiz_played_nicks_v1';
+        const played = JSON.parse(localStorage.getItem(playedKey)||'[]');
+        played.push(currentUser);
+        localStorage.setItem(playedKey, JSON.stringify(played));
+      } else {
+        saveMessage.textContent = 'Erro ao salvar! Tente novamente.';
+        saveMessage.style.color = '#ff4b4b';
+        saveResultBtn.disabled = false;
+      }
+      setTimeout(()=>{ saveMessage.style.display = 'none'; }, 3000);
+      saveResultBtn.style.display = 'none'; // Esconde botão de salvar após salvar ou erro
+    });
 
-        // delete
-        const delBtn = document.createElement('button');
-        delBtn.className = 'btn';
-        delBtn.style.background = '#b31b1b';
-        delBtn.textContent = 'Deletar';
-        delBtn.onclick = async ()=>{
-          if(!confirm('Deletar este envio?')) return;
-          if(s.id){ await deleteSubmissionById(s.id); } else {
-            // local fallback removal
-            const key = 'quiz_submissions_fallback';
-            const arr = JSON.parse(localStorage.getItem(key)||'[]');
-            // find by index among fallback only (more robust could match nick+timestamp)
-            arr.splice(idx,1);
-            localStorage.setItem(key, JSON.stringify(arr));
-          }
-          renderAllResults();
-        };
+    closeModalBtn.addEventListener('click', ()=>{
+      endGameModal.style.display = 'none';
+      renderAllResults(); // Atualiza e exibe os resultados
+      showView('results');
+    });
 
-        // edit
-        const editBtn = document.createElement('button');
-        editBtn.className = 'btn';
-        editBtn.style.background = '#6b2b8a';
-        editBtn.textContent = 'Editar';
-        editBtn.onclick = async ()=>{
-          const newNick = prompt('Nick:', s.nick);
-          if(newNick === null) return;
-          const newScore = parseInt(prompt('Pontuação:', s.score), 10);
-          if(isNaN(newScore)) return alert('Pontuação inválida');
-          const newTime = parseInt(prompt('Tempo (s):', s.timeSec), 10);
-          if(isNaN(newTime)) return alert('Tempo inválido');
-          const newTimestamp = s.timestamp || Date.now();
-          const updated = { nick: newNick, score: newScore, timeSec: newTime, timestamp: newTimestamp };
-          if(s.id){ await updateSubmissionById(s.id, updated); } else {
-            const key = 'quiz_submissions_fallback';
-            const arr = JSON.parse(localStorage.getItem(key)||'[]');
-            arr[idx] = updated;
-            localStorage.setItem(key, JSON.stringify(arr));
-          }
-          renderAllResults();
-        };
+    // Results & Admin
+    async function renderAllResults(){
+      let subs = [];
+      try{ subs = await fetchAllSubmissions(); }catch(e){ subs = []; }
 
-        // view podium (scroll to top)
-        const viewPodBtn = document.createElement('button');
-        viewPodBtn.className = 'btn';
-        viewPodBtn.style.background = '#333';
-        viewPodBtn.textContent = 'Ver pódio';
-        viewPodBtn.onclick = ()=>{ window.scrollTo({ top: 0, behavior: 'smooth' }); };
+      const fallback = JSON.parse(localStorage.getItem('quiz_submissions_fallback')||'[]');
+      subs = subs.concat(fallback.map(s=>({ id:null, ...s })));
 
-        actionsTd.appendChild(delBtn);
-        actionsTd.appendChild(editBtn);
-        actionsTd.appendChild(viewPodBtn);
-        allSubmissionsTbody.appendChild(tr);
-      });
+      // podium sort: score desc, timeSec asc (Critério de desempate)
+      const podiumSorted = [...subs].sort((a,b)=>{
+        if(b.score !== a.score) return b.score - a.score;
+        // Desempate por tempo: menor tempo fica na frente (asc)
+        return (a.timeSec || 999999) - (b.timeSec || 999999);
+      });
 
-      if(currentUser){
-        const found = byOrder.slice().reverse().find(s=> s.nick.toLowerCase() === currentUser.toLowerCase());
-        if(found) showUserBox(found); else userResultBox.style.display='none';
-      } else userResultBox.style.display='none';
-    }
+      // render podium
+      podiumContainer.innerHTML = '';
+      const top3 = [podiumSorted[0]||null, podiumSorted[1]||null, podiumSorted[2]||null];
+      const order = [1,0,2]; // 2º, 1º, 3º para renderização do pódio
+      const classes = ['second', 'first', 'third']; // Classes correspondentes
 
-    function renderResultsForNick(nick){ renderAllResults(); showView('results'); }
+      order.forEach((pos, idx)=>{
+        const data = top3[pos];
+        const placeDiv = document.createElement('div');
+        placeDiv.className = `place ${classes[idx]}`; // Usa classes correspondentes
+        if(data){
+          const placeNum = pos===1? '1º' : (pos===0? '2º':'3º');
+          placeDiv.innerHTML = `<div style="font-size:14px;font-weight:800">${placeNum}</div><div style="margin-top:6px;font-weight:800">${escapeHtml(data.nick)}</div><div style="margin-top:6px;font-weight:700">${data.score} pts (${data.timeSec}s)</div>`;
+        } else {
+          placeDiv.innerHTML = `<div style="font-size:14px;opacity:0.9">-</div>`;
+        }
+        podiumContainer.appendChild(placeDiv);
+      });
 
-    function showUserBox(sub){
-      userResultBox.style.display = 'block';
-      const d = new Date(sub.timestamp||Date.now());
-      userResultBox.innerHTML = `<strong>Seu resultado</strong><div style="margin-top:6px">Nick: <strong>${escapeHtml(sub.nick)}</strong></div><div>Pontos: <strong>${sub.score}</strong></div><div>Tempo para realizar o questionário: <strong>${sub.timeSec} s</strong></div><div>Data / Hora do envio: <strong>${formatDateTime(d)}</strong></div>`;
-    }
+      // list all submissions by chronological order
+      allSubmissionsTbody.innerHTML = '';
+      const byOrder = [...subs].sort((a,b)=>(a.timestamp||0) - (b.timestamp||0));
+      
+      // Esconde a coluna de Ações para não-admin
+      adminActionsHeader.style.display = isAdmin ? 'table-cell' : 'none';
 
-    // Admin functions
-    async function renderAdminPanel(){ adminArea.style.display = 'block'; renderAllResults(); }
-    adminRebootBtn.addEventListener('click', async ()=>{
-      if(!confirm('Apagar TODOS os resultados do banco? Esta ação é irreversível.')) return;
-      try{
-        const all = await fetchAllSubmissions();
-        for(const s of all){ if(s.id) await deleteSubmissionById(s.id); }
-        localStorage.removeItem('quiz_submissions_fallback');
-        alert('Todos os resultados apagados.');
-        renderAllResults();
-      }catch(e){ alert('Erro ao apagar: ' + (e && e.message ? e.message : e)); }
-    });
-    adminViewPodiumBtn.addEventListener('click', ()=>{ window.scrollTo({ top: 0, behavior: 'smooth' }); });
+      byOrder.forEach((s, idx)=>{
+        const tr = document.createElement('tr');
+        const d = new Date(s.timestamp||Date.now());
+        tr.innerHTML = `<td>${idx+1}</td><td>${escapeHtml(s.nick)}</td><td>${s.score}</td><td>${s.timeSec}</td><td>${formatDateTime(d)}</td><td class="admin-actions-cell" style="display:${isAdmin?'table-cell':'none'}"></td>`;
+        const actionsTd = tr.querySelector('.admin-actions-cell');
 
-    // Init
-    (function init(){
-      showView('login');
-      characters.forEach(c=>{ const i = new Image(); i.src = c.url; });
-    })();
+        if(isAdmin && actionsTd){ // Apenas adiciona botões se for admin
+          // delete
+          const delBtn = document.createElement('button');
+          delBtn.className = 'btn';
+          delBtn.style.cssText = 'background:#b31b1b; padding: 6px 8px; font-size: 12px; margin-right: 5px;';
+          delBtn.textContent = 'Deletar';
+          delBtn.onclick = async ()=>{
+            if(!confirm(`Deletar o envio de ${s.nick} (ID: ${s.id || 'Local'})?`)) return;
+            if(s.id){ await deleteSubmissionById(s.id); } else {
+              // local fallback removal (melhoria de UX: deletar o local)
+              const key = 'quiz_submissions_fallback';
+              let arr = JSON.parse(localStorage.getItem(key)||'[]');
+              arr = arr.filter(item => item.nick !== s.nick || item.timestamp !== s.timestamp); // Filtra por nick e timestamp
+              localStorage.setItem(key, JSON.stringify(arr));
+            }
+            renderAllResults();
+          };
 
-    // prevent accidental reload during game
-    window.addEventListener('beforeunload', (e)=>{
-      if(gameStartTs && !gameEndTs){
-        e.preventDefault();
-        e.returnValue = 'Se você sair agora perderá seu progresso.';
-      }
-    });
+          // edit
+          const editBtn = document.createElement('button');
+          editBtn.className = 'btn';
+          editBtn.style.cssText = 'background:#6b2b8a; padding: 6px 8px; font-size: 12px; margin-right: 5px;';
+          editBtn.textContent = 'Editar';
+          editBtn.onclick = async ()=>{
+            const newNick = prompt('Nick:', s.nick);
+            if(newNick === null) return;
+            const newScore = parseInt(prompt('Pontuação:', s.score), 10);
+            if(isNaN(newScore)) return alert('Pontuação inválida');
+            const newTime = parseInt(prompt('Tempo (s):', s.timeSec), 10);
+            if(isNaN(newTime)) return alert('Tempo inválido');
+            const newTimestamp = s.timestamp || Date.now();
+            const updated = { nick: newNick, score: newScore, timeSec: newTime, timestamp: newTimestamp };
+            if(s.id){ await updateSubmissionById(s.id, updated); } else {
+              // local fallback removal (melhoria de UX: editar o local)
+              const key = 'quiz_submissions_fallback';
+              let arr = JSON.parse(localStorage.getItem(key)||'[]');
+              const indexToUpdate = arr.findIndex(item => item.nick === s.nick && item.timestamp === s.timestamp);
+              if(indexToUpdate !== -1) arr[indexToUpdate] = updated;
+              localStorage.setItem(key, JSON.stringify(arr));
+            }
+            renderAllResults();
+          };
 
-    // realtime update attempt (if allowed by rules)
-    try{
-      const qAll = query(collection(db, SUBMISSIONS_COLLECTION), orderBy('timestamp','asc'));
-      onSnapshot(qAll, ()=>{ if(document.body.contains(allSubmissionsTbody)) renderAllResults(); });
-    }catch(e){ /* ignore if cannot subscribe */ }
+          // view podium (scroll to top)
+          const viewPodBtn = document.createElement('button');
+          viewPodBtn.className = 'btn';
+          viewPodBtn.style.cssText = 'background:#333; padding: 6px 8px; font-size: 12px;';
+          viewPodBtn.textContent = 'Ver pódio';
+          viewPodBtn.onclick = ()=>{ window.scrollTo({ top: 0, behavior: 'smooth' }); };
 
-  </script>
+          actionsTd.appendChild(delBtn);
+          actionsTd.appendChild(editBtn);
+          actionsTd.appendChild(viewPodBtn);
+        }
+
+        allSubmissionsTbody.appendChild(tr);
+      });
+
+      if(currentUser){
+        // Reutiliza a ordenação para encontrar o melhor resultado do usuário
+        const found = podiumSorted.find(s=> s.nick.toLowerCase() === currentUser.toLowerCase());
+        if(found) showUserBox(found); else userResultBox.style.display='none';
+      } else userResultBox.style.display='none';
+    }
+
+    function renderResultsForNick(nick){ currentUser=nick; renderAllResults(); showView('results'); }
+
+    function showUserBox(sub){
+      userResultBox.style.display = 'block';
+      const d = new Date(sub.timestamp||Date.now());
+      userResultBox.innerHTML = `<strong>Seu melhor resultado</strong><div style="margin-top:6px">Nick: <strong>${escapeHtml(sub.nick)}</strong></div><div>Pontos: <strong>${sub.score}</strong></div><div>Tempo: <strong>${sub.timeSec} s</strong></div><div>Data/Hora: <strong>${formatDateTime(d)}</strong></div>`;
+    }
+
+    // Admin functions
+    async function renderAdminPanel(){ adminArea.style.display = 'block'; isAdmin=true; adminActionsHeader.style.display = 'table-cell'; renderAllResults(); }
+    adminRebootBtn.addEventListener('click', async ()=>{
+      if(!confirm('Apagar TODOS os resultados do banco? Esta ação é irreversível.')) return;
+      try{
+        const all = await fetchAllSubmissions();
+        for(const s of all){ if(s.id) await deleteSubmissionById(s.id); }
+        localStorage.removeItem('quiz_submissions_fallback');
+        alert('Todos os resultados apagados.');
+        renderAllResults();
+      }catch(e){ alert('Erro ao apagar: ' + (e && e.message ? e.message : e)); }
+    });
+    adminViewPodiumBtn.addEventListener('click', ()=>{ window.scrollTo({ top: 0, behavior: 'smooth' }); });
+
+    // Init
+    (function init(){
+      showView('login');
+      characters.forEach(c=>{ const i = new Image(); i.src = c.url; });
+    })();
+
+    // prevent accidental reload during game
+    window.addEventListener('beforeunload', (e)=>{
+      if(gameStartTs && !gameEndTs && !endGameModal.style.display === 'flex'){
+        e.preventDefault();
+        e.returnValue = 'Se você sair agora perderá seu progresso.';
+      }
+    });
+
+    // realtime update attempt (if allowed by rules)
+    try{
+      const qAll = query(collection(db, SUBMISSIONS_COLLECTION), orderBy('timestamp','asc'));
+      onSnapshot(qAll, (snapshot)=>{
+        if(document.body.contains(allSubmissionsTbody) && resultsView.style.display === 'block'){
+          // Apenas renderiza se a tela de resultados estiver ativa para evitar sobrecarga desnecessária
+          renderAllResults();
+        }
+      });
+    }catch(e){ /* ignore if cannot subscribe */ }
+
+  </script>
 </body>
 </html>

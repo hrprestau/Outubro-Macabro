@@ -623,12 +623,30 @@
           delBtn.textContent = 'Deletar';
           delBtn.onclick = async ()=>{
             if(!confirm('Deletar este envio?')) return;
-            if(s.id){ await deleteSubmissionById(s.id); } else {
+            if(s.id){ 
+              try{
+                await deleteSubmissionById(s.id);
+                // also remove this nick from local "played nicks" list (so it's freed locally)
+                const playedKey = 'quiz_played_nicks_v1';
+                const played = JSON.parse(localStorage.getItem(playedKey)||'[]');
+                const filtered = played.filter(p => String(p).toLowerCase() !== String(s.nick).toLowerCase());
+                localStorage.setItem(playedKey, JSON.stringify(filtered));
+              }catch(e){
+                console.error('Erro ao deletar remoto:', e);
+                alert('Erro ao deletar registro remoto: ' + (e && e.message ? e.message : ''));
+              }
+            } else {
               const key = 'quiz_submissions_fallback';
               const arr = JSON.parse(localStorage.getItem(key)||'[]');
               const index = arr.findIndex(el => (el.nick === s.nick && String(el.timestamp) === String(s.timestamp)));
               if(index !== -1) arr.splice(index,1);
               localStorage.setItem(key, JSON.stringify(arr));
+
+              // remove from played list too
+              const playedKey = 'quiz_played_nicks_v1';
+              const played = JSON.parse(localStorage.getItem(playedKey)||'[]');
+              const filtered = played.filter(p => String(p).toLowerCase() !== String(s.nick).toLowerCase());
+              localStorage.setItem(playedKey, JSON.stringify(filtered));
             }
             renderAllResults();
           };
@@ -638,6 +656,7 @@
           editBtn.style.background = '#6b2b8a';
           editBtn.textContent = 'Editar';
           editBtn.onclick = async ()=>{
+            const oldNick = s.nick;
             const newNick = prompt('Nick:', s.nick);
             if(newNick === null) return;
             const newScore = parseInt(prompt('Pontuação:', s.score), 10);
@@ -646,12 +665,30 @@
             if(isNaN(newTime)) return alert('Tempo inválido');
             const newTimestamp = s.timestamp || Date.now();
             const updated = { nick: newNick, score: newScore, timeSec: newTime, timestamp: newTimestamp };
-            if(s.id){ await updateSubmissionById(s.id, updated); } else {
+            if(s.id){ 
+              try{
+                await updateSubmissionById(s.id, updated);
+                // update local played list: replace oldNick occurrences with newNick
+                const playedKey = 'quiz_played_nicks_v1';
+                const played = JSON.parse(localStorage.getItem(playedKey)||'[]');
+                const updatedPlayed = played.map(p => (String(p).toLowerCase() === String(oldNick).toLowerCase() ? newNick : p));
+                localStorage.setItem(playedKey, JSON.stringify(updatedPlayed));
+              }catch(e){
+                console.error('Erro ao atualizar remoto:', e);
+                alert('Erro ao atualizar registro remoto: ' + (e && e.message ? e.message : ''));
+              }
+            } else {
               const key = 'quiz_submissions_fallback';
               const arr = JSON.parse(localStorage.getItem(key)||'[]');
               const index = arr.findIndex(el => (el.nick === s.nick && String(el.timestamp) === String(s.timestamp)));
               if(index !== -1) arr[index] = updated;
               localStorage.setItem(key, JSON.stringify(arr));
+
+              // update local played list: replace oldNick occurrences with newNick
+              const playedKey = 'quiz_played_nicks_v1';
+              const played = JSON.parse(localStorage.getItem(playedKey)||'[]');
+              const updatedPlayed = played.map(p => (String(p).toLowerCase() === String(oldNick).toLowerCase() ? newNick : p));
+              localStorage.setItem(playedKey, JSON.stringify(updatedPlayed));
             }
             renderAllResults();
           };
@@ -694,8 +731,11 @@
       try{
         const all = await fetchAllSubmissions();
         for(const s of all){ if(s.id) await deleteSubmissionById(s.id); }
+        // clear local fallback storage
         localStorage.removeItem('quiz_submissions_fallback');
-        alert('Todos os resultados apagados.');
+        // <-- ADDED: also clear the played-nicks registry so nicks become reusable after reboot
+        localStorage.removeItem('quiz_played_nicks_v1');
+        alert('Todos os resultados apagados e cache local limpo.');
         renderAllResults();
       }catch(e){ alert('Erro ao apagar: ' + (e && e.message ? e.message : e)); }
     });
